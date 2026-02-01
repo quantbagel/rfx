@@ -1,0 +1,37 @@
+[package]
+name = "rfx-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Core Rust library for rfx robotics framework"
+
+[features]
+default = []
+# Native CycloneDDS backend (requires system library)
+dds-cyclone = []
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+nalgebra.workspace = true
+crossbeam.workspace = true
+crossbeam-channel.workspace = true
+parking_lot.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+derive_more.workspace = true
+cfg-if.workspace = true
+
+# DDS communication
+dust_dds.workspace = true
+crc32fast.workspace = true
+
+[dev-dependencies]
+approx.workspace = true
+tokio = { workspace = true, features = ["test-util"] }
+criterion.workspace = true
+
+[[bench]]
+name = "control_loop"
+harness = false
