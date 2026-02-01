@@ -1,0 +1,25 @@
+# Unitree Go2 Quadruped Configuration
+name: Unitree Go2
+state_dim: 34      # 12 pos + 12 vel + 4 quat + 3 gyro + 3 acc
+action_dim: 12     # 12 joint position commands
+max_state_dim: 64
+max_action_dim: 64
+control_freq_hz: 200
+
+joints:
+  - {name: FR_hip, index: 0}
+  - {name: FR_thigh, index: 1}
+  - {name: FR_calf, index: 2}
+  - {name: FL_hip, index: 3}
+  - {name: FL_thigh, index: 4}
+  - {name: FL_calf, index: 5}
+  - {name: RR_hip, index: 6}
+  - {name: RR_thigh, index: 7}
+  - {name: RR_calf, index: 8}
+  - {name: RL_hip, index: 9}
+  - {name: RL_thigh, index: 10}
+  - {name: RL_calf, index: 11}
+
+hardware:
+  ip_address: 192.168.123.161
+  edu_mode: false

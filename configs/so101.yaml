@@ -1,0 +1,44 @@
+# SO-101 6-DOF Robot Arm Configuration
+name: SO-101
+state_dim: 12      # 6 positions + 6 velocities
+action_dim: 6      # 6 joint position commands
+max_state_dim: 64
+max_action_dim: 64
+control_freq_hz: 50
+
+joints:
+  - name: shoulder_pan
+    index: 0
+    position_min: -3.14159
+    position_max: 3.14159
+  - name: shoulder_lift
+    index: 1
+    position_min: -1.57
+    position_max: 1.57
+  - name: elbow
+    index: 2
+    position_min: -2.0
+    position_max: 2.0
+  - name: wrist_pitch
+    index: 3
+    position_min: -1.57
+    position_max: 1.57
+  - name: wrist_roll
+    index: 4
+    position_min: -3.14159
+    position_max: 3.14159
+  - name: gripper
+    index: 5
+    position_min: 0.0
+    position_max: 1.0
+
+cameras:
+  - name: wrist_camera
+    width: 640
+    height: 480
+    fps: 30
+    device_id: 0
+
+hardware:
+  port: /dev/ttyACM0
+  baudrate: 1000000
