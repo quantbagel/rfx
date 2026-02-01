@@ -34,13 +34,18 @@ fn _rfx(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPidConfig>()?;
     m.add_class::<PyControlLoopHandle>()?;
 
-    // Hardware types
+    // Hardware types - Go2
     m.add_class::<PyGo2>()?;
     m.add_class::<PyGo2Config>()?;
     m.add_class::<PyGo2State>()?;
     m.add_class::<PyImuState>()?;
     m.add_class::<PyMotorState>()?;
     m.add_class::<PyMotorCmd>()?;
+
+    // Hardware types - SO-101
+    m.add_class::<PySo101>()?;
+    m.add_class::<PySo101Config>()?;
+    m.add_class::<PySo101State>()?;
 
     // Motor index constants
     let motor_idx = PyModule::new(m.py(), "motor_idx")?;
