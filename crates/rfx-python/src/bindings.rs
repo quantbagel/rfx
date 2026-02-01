@@ -822,6 +822,169 @@ pub struct PyGo2 {
     inner: Arc<rfx_core::hardware::go2::Go2>,
 }
 
+// ============================================================================
+// SO-101 Bindings
+// ============================================================================
+
+/// SO-101 arm configuration
+#[pyclass(name = "So101Config")]
+#[derive(Clone)]
+pub struct PySo101Config {
+    pub(crate) inner: rfx_core::hardware::so101::So101Config,
+}
+
+#[pymethods]
+impl PySo101Config {
+    /// Create a leader arm configuration
+    #[staticmethod]
+    fn leader(port: &str) -> Self {
+        Self {
+            inner: rfx_core::hardware::so101::So101Config::leader(port),
+        }
+    }
+
+    /// Create a follower arm configuration
+    #[staticmethod]
+    fn follower(port: &str) -> Self {
+        Self {
+            inner: rfx_core::hardware::so101::So101Config::follower(port),
+        }
+    }
+
+    /// Set the baud rate
+    fn with_baudrate(&self, baudrate: u32) -> Self {
+        Self {
+            inner: self.inner.clone().with_baudrate(baudrate),
+        }
+    }
+
+    #[getter]
+    fn port(&self) -> &str {
+        &self.inner.port
+    }
+
+    #[getter]
+    fn baudrate(&self) -> u32 {
+        self.inner.baudrate
+    }
+
+    #[getter]
+    fn is_leader(&self) -> bool {
+        self.inner.is_leader
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "So101Config(port='{}', baudrate={}, is_leader={})",
+            self.inner.port, self.inner.baudrate, self.inner.is_leader
+        )
+    }
+}
+
+/// SO-101 arm state
+#[pyclass(name = "So101State")]
+#[derive(Clone)]
+pub struct PySo101State {
+    inner: rfx_core::hardware::so101::So101State,
+}
+
+#[pymethods]
+impl PySo101State {
+    /// Get joint positions as a list
+    fn joint_positions(&self) -> Vec<f32> {
+        self.inner.joint_positions()
+    }
+
+    /// Get joint velocities as a list
+    fn joint_velocities(&self) -> Vec<f32> {
+        self.inner.joint_velocities()
+    }
+
+    #[getter]
+    fn timestamp(&self) -> f64 {
+        self.inner.timestamp
+    }
+
+    #[getter]
+    fn connected(&self) -> bool {
+        self.inner.connected
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "So101State(positions={:?}, connected={})",
+            self.inner.joint_positions, self.inner.connected
+        )
+    }
+}
+
+/// SO-101 robotic arm interface
+#[pyclass(name = "So101")]
+pub struct PySo101 {
+    inner: parking_lot::Mutex<rfx_core::hardware::so101::So101>,
+}
+
+#[pymethods]
+impl PySo101 {
+    /// Connect to an SO-101 arm
+    #[staticmethod]
+    fn connect(py: Python<'_>, config: PySo101Config) -> PyResult<Self> {
+        let result = py.allow_threads(|| rfx_core::hardware::so101::So101::connect(config.inner));
+
+        match result {
+            Ok(arm) => Ok(Self {
+                inner: parking_lot::Mutex::new(arm),
+            }),
+            Err(e) => Err(PyRuntimeError::new_err(e.to_string())),
+        }
+    }
+
+    /// Check if connected
+    fn is_connected(&self) -> bool {
+        self.inner.lock().is_connected()
+    }
+
+    /// Get current state
+    fn state(&self) -> PySo101State {
+        PySo101State {
+            inner: self.inner.lock().state(),
+        }
+    }
+
+    /// Read current positions (direct read)
+    fn read_positions(&self, py: Python<'_>) -> Vec<f32> {
+        py.allow_threads(|| self.inner.lock().read_positions())
+    }
+
+    /// Set target positions for all joints
+    fn set_positions(&self, py: Python<'_>, positions: Vec<f32>) -> PyResult<()> {
+        py.allow_threads(|| self.inner.lock().set_positions(positions))
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))
+    }
+
+    /// Enable or disable torque
+    fn set_torque_enable(&self, py: Python<'_>, enabled: bool) -> PyResult<()> {
+        py.allow_threads(|| self.inner.lock().set_torque_enable(enabled))
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))
+    }
+
+    /// Move to home position
+    fn go_home(&self, py: Python<'_>) -> PyResult<()> {
+        py.allow_threads(|| self.inner.lock().go_home())
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))
+    }
+
+    /// Disconnect from the arm
+    fn disconnect(&self, py: Python<'_>) -> PyResult<()> {
+        py.allow_threads(|| self.inner.lock().disconnect())
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))
+    }
+
+    fn __repr__(&self) -> String {
+        format!("So101(connected={})", self.inner.lock().is_connected())
+    }
+}
+
 #[pymethods]
 impl PyGo2 {
     /// Connect to a Go2 robot
