@@ -1,0 +1,102 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "rfx"
+version = "0.1.0"
+description = "A tinygrad-inspired robotics framework for Unitree Go2"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "rfx contributors" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Robotics",
+]
+keywords = ["robotics", "unitree", "go2", "quadruped", "control"]
+
+# Core dependencies
+dependencies = [
+    "tinygrad>=0.9.0",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# LLM agent integration
+agent = [
+    "anthropic>=0.25.0",
+    "openai>=1.0.0",
+]
+# Development dependencies
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1",
+    "mypy>=1.0",
+]
+# All optional dependencies
+all = [
+    "rfx[agent]",
+    "rfx[dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/quantbagel/rfx"
+Documentation = "https://github.com/quantbagel/rfx#readme"
+Repository = "https://github.com/quantbagel/rfx"
+Issues = "https://github.com/quantbagel/rfx/issues"
+
+[tool.maturin]
+# Build the rfx-python crate
+manifest-path = "crates/rfx-python/Cargo.toml"
+# Include Python source files
+python-source = "python"
+# Module name
+module-name = "rfx._rfx"
+# Features
+features = ["extension-module"]
+# Strip symbols for smaller binaries
+strip = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # function call in default argument
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rfx"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
