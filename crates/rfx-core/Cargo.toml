@@ -27,6 +27,9 @@ cfg-if.workspace = true
 dust_dds.workspace = true
 crc32fast.workspace = true
 
+# Serial communication (for SO-101)
+serialport = "4.3"
+
 [dev-dependencies]
 approx.workspace = true
 tokio = { workspace = true, features = ["test-util"] }
