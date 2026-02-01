@@ -1,15 +1,17 @@
 //! Hardware abstraction and robot interfaces
 //!
 //! Provides traits for robot hardware abstraction and implementations
-//! for the Unitree Go2 quadruped robot.
+//! for the Unitree Go2 quadruped robot and SO-101 robotic arm.
 
 pub mod go2;
+pub mod so101;
 mod traits;
 
 pub use go2::{
     dds::{DdsBackend, DustDdsBackend},
     Go2, Go2Config, Go2State, ImuState, LowCmd, LowState, MotorCmd, MotorState, SportModeCmd,
 };
+pub use so101::{So101, So101Config, So101State};
 
 #[cfg(feature = "dds-cyclone")]
 pub use go2::dds::CycloneDdsBackend;
