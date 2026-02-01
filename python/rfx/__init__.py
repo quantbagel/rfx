@@ -1,21 +1,21 @@
 """
-rfx: A tinygrad-inspired robotics framework for Unitree Go2
+rfx: The PyTorch for Robots
 
-A minimal, Python-first robotics framework with Rust performance.
-No ROS2 complexity, no DDS boilerplate - just clean APIs for physical intelligence experiments.
+Three methods. That's it.
 
-Example:
-    >>> import rfx
-    >>> # Quick training with tinygrad
-    >>> from rfx.nn import go2_mlp
-    >>> from rfx.rl import PPOTrainer
-    >>> from rfx.envs import Go2Env
-    >>>
-    >>> env = Go2Env(sim=True)
-    >>> policy = go2_mlp()
-    >>> trainer = PPOTrainer(policy)
-    >>>
-    >>> # Or connect to real hardware
+    >>> robot = rfx.SimRobot.from_config("so101.yaml", num_envs=4096)
+    >>> obs = robot.observe()           # Dict[str, Tensor]
+    >>> robot.act(action)               # Execute action
+    >>> obs = robot.reset()             # Reset
+
+Real robot - same interface:
+
+    >>> robot = rfx.RealRobot.from_config("so101.yaml", port="/dev/ttyACM0")
+    >>> obs = robot.observe()           # (1, 64) tensor
+    >>> robot.act(action)               # Send to hardware
+
+v1 API still supported:
+
     >>> go2 = rfx.Go2.connect("192.168.123.161")
     >>> go2.walk(0.5, 0, 0)
 """
@@ -88,33 +88,57 @@ except ImportError:
     SimState = None
     MockSimBackend = None
 
-# Import Python modules
+# ============================================================================
+# rfx v2 API
+# ============================================================================
+
+from .robot import Robot, RobotBase
+from .config import RobotConfig, CameraConfig, JointConfig, load_config
+from .observation import ObservationSpec, make_observation, unpad_action
+from .sim import SimRobot, MockRobot
+from .real import RealRobot
+from . import sim
+from . import real
+from . import utils
+
+# ============================================================================
+# rfx v1 API (backward compatible)
+# ============================================================================
+
 from .skills import skill, Skill, SkillRegistry
 from .agent import Agent
-
-# Decorators for control loops and policies
 from .decorators import control_loop, policy, MotorCommands
-
-# Neural network module (tinygrad-based)
 from . import nn
 from . import rl
 from . import envs
 
 __all__ = [
-    # Version
+    # v2 API
+    "Robot",
+    "RobotBase",
+    "SimRobot",
+    "MockRobot",
+    "RealRobot",
+    "RobotConfig",
+    "CameraConfig",
+    "JointConfig",
+    "load_config",
+    "ObservationSpec",
+    "make_observation",
+    "unpad_action",
+    "sim",
+    "real",
+    "utils",
+    # v1 API
     "__version__",
     "VERSION",
-    # Python modules
     "nn",
     "rl",
     "envs",
-    # Math
     "Quaternion",
     "Transform",
     "LowPassFilter",
-    # Communication
     "Topic",
-    # Control
     "Pid",
     "PidConfig",
     "ControlLoopHandle",
@@ -123,26 +147,21 @@ __all__ = [
     "control_loop",
     "policy",
     "MotorCommands",
-    # Hardware
     "Go2",
     "Go2Config",
     "Go2State",
     "ImuState",
     "MotorState",
     "MotorCmd",
-    # Motor indices
     "motor_idx",
     "MOTOR_NAMES",
     "motor_index_by_name",
-    # Simulation
     "PhysicsConfig",
     "SimConfig",
     "SimState",
     "MockSimBackend",
-    # Skills
     "skill",
     "Skill",
     "SkillRegistry",
-    # Agent
     "Agent",
 ]
