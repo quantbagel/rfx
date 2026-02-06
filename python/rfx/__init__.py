@@ -24,7 +24,7 @@ from __future__ import annotations
 
 # Import from Rust extension (with fallback for when not built)
 try:
-    from _rfx import (
+    from ._rfx import (
         # Version
         __version__,
         VERSION,
@@ -57,6 +57,7 @@ try:
         SimState,
         MockSimBackend,
     )
+
     _RUST_AVAILABLE = True
 except ImportError:
     # Rust extension not built - provide stubs for pure Python usage
