@@ -14,7 +14,7 @@ A robotics framework with a Rust core and Python bindings.
 ## Installation
 
 ```bash
-pip install git+https://github.com/quantbagel/rfx.git
+uv pip install git+https://github.com/quantbagel/rfx.git
 ```
 
 ## Development
