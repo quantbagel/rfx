@@ -24,39 +24,33 @@ from __future__ import annotations
 
 # Import from Rust extension (with fallback for when not built)
 try:
-    from ._rfx import (
-        # Version
-        __version__,
-        VERSION,
-        # Math
-        Quaternion,
-        Transform,
-        LowPassFilter,
-        # Communication
-        Topic,
-        # Control
-        Pid,
-        PidConfig,
-        ControlLoopHandle,
-        ControlLoopStats,
-        run_control_loop,
-        # Hardware
-        Go2,
-        Go2Config,
-        Go2State,
-        ImuState,
-        MotorState,
-        MotorCmd,
-        # Motor indices
-        motor_idx,
-        MOTOR_NAMES,
-        motor_index_by_name,
-        # Simulation
-        PhysicsConfig,
-        SimConfig,
-        SimState,
-        MockSimBackend,
-    )
+    from . import _rfx
+
+    __version__ = _rfx.__version__
+    VERSION = _rfx.VERSION
+
+    Quaternion = getattr(_rfx, "Quaternion", None)
+    Transform = getattr(_rfx, "Transform", None)
+    LowPassFilter = getattr(_rfx, "LowPassFilter", None)
+    Topic = getattr(_rfx, "Topic", None)
+    Pid = getattr(_rfx, "Pid", None)
+    PidConfig = getattr(_rfx, "PidConfig", None)
+    ControlLoopHandle = getattr(_rfx, "ControlLoopHandle", None)
+    ControlLoopStats = getattr(_rfx, "ControlLoopStats", None)
+    run_control_loop = getattr(_rfx, "run_control_loop", None)
+    Go2 = getattr(_rfx, "Go2", None)
+    Go2Config = getattr(_rfx, "Go2Config", None)
+    Go2State = getattr(_rfx, "Go2State", None)
+    ImuState = getattr(_rfx, "ImuState", None)
+    MotorState = getattr(_rfx, "MotorState", None)
+    MotorCmd = getattr(_rfx, "MotorCmd", None)
+    motor_idx = getattr(_rfx, "motor_idx", None)
+    MOTOR_NAMES = getattr(_rfx, "MOTOR_NAMES", None)
+    motor_index_by_name = getattr(_rfx, "motor_index_by_name", None)
+    PhysicsConfig = getattr(_rfx, "PhysicsConfig", None)
+    SimConfig = getattr(_rfx, "SimConfig", None)
+    SimState = getattr(_rfx, "SimState", None)
+    MockSimBackend = getattr(_rfx, "MockSimBackend", None)
 
     _RUST_AVAILABLE = True
 except ImportError:
