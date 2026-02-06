@@ -46,6 +46,7 @@ class RealRobot(RobotBase):
 
         self._robot_type = robot_type
         self._backend = self._create_backend(robot_type, hardware_config)
+        self._disconnected = False
 
     def _detect_robot_type(self) -> str:
         name = self._config.name.lower()
@@ -59,9 +60,11 @@ class RealRobot(RobotBase):
     def _create_backend(self, robot_type: str, hardware_config: Dict):
         if robot_type == "so101":
             from .so101 import So101Backend
+
             return So101Backend(config=self._config, **hardware_config)
         elif robot_type == "go2":
             from .go2 import Go2Backend
+
             return Go2Backend(config=self._config, **hardware_config)
         else:
             raise ValueError(f"Unknown robot type: {robot_type}")
@@ -87,15 +90,22 @@ class RealRobot(RobotBase):
         self._backend.go_home()
 
     def disconnect(self) -> None:
+        if self._disconnected:
+            return
         self._backend.disconnect()
+        self._disconnected = True
 
     @classmethod
-    def from_config(cls, config_path: Union[str, Path], robot_type: Optional[str] = None, **kwargs) -> "RealRobot":
+    def from_config(
+        cls, config_path: Union[str, Path], robot_type: Optional[str] = None, **kwargs
+    ) -> "RealRobot":
         return cls(config_path, robot_type=robot_type, **kwargs)
 
     def __repr__(self) -> str:
         return f"RealRobot(type='{self._robot_type}', state_dim={self._state_dim}, connected={self._backend.is_connected()})"
 
     def __del__(self):
-        if hasattr(self, "_backend"):
-            self._backend.disconnect()
+        try:
+            self.disconnect()
+        except Exception:
+            pass
