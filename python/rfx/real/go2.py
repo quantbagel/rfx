@@ -4,6 +4,9 @@ rfx.real.go2 - Unitree Go2 hardware backend
 
 from __future__ import annotations
 
+import os
+import sys
+import threading
 from typing import TYPE_CHECKING, Dict, Optional
 
 import torch
@@ -18,6 +21,8 @@ if TYPE_CHECKING:
 class Go2Backend:
     """Unitree Go2 hardware backend using Rust DDS driver."""
 
+    _channel_initialized = False
+
     def __init__(
         self,
         config: RobotConfig,
@@ -28,9 +33,25 @@ class Go2Backend:
         self.config = config
         self.ip_address = ip_address
         self.edu_mode = edu_mode
+        self._backend_mode = "rust"
+        self._robot = None
+        self._sport_client = None
+        self._state_sub = None
+        self._latest_lowstate = None
+        self._state_lock = threading.Lock()
+
+        backend_pref = os.getenv("RFX_GO2_BACKEND", "auto").strip().lower()
+        if backend_pref not in {"auto", "rust", "unitree", "unitree_sdk2py"}:
+            backend_pref = "auto"
+
+        if not self.edu_mode and backend_pref in {"auto", "unitree", "unitree_sdk2py"}:
+            if self._init_unitree_sdk_backend():
+                self._backend_mode = "unitree_sdk2py"
+                return
 
         try:
             from rfx._rfx import Go2, Go2Config
+
             self._Go2 = Go2
             self._Go2Config = Go2Config
         except ImportError:
@@ -42,10 +63,86 @@ class Go2Backend:
 
         self._robot = Go2.connect(rust_config)
 
+    def _init_unitree_sdk_backend(self) -> bool:
+        pet_go_path = "/unitree/module/pet_go"
+        if pet_go_path not in sys.path:
+            sys.path.insert(0, pet_go_path)
+
+        try:
+            from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
+            from unitree_sdk2py.go2.sport.sport_client import SportClient
+            from unitree_sdk2py.idl.unitree_go.msg.dds_ import LowState_
+        except Exception:
+            return False
+
+        try:
+            if not Go2Backend._channel_initialized:
+                ChannelFactoryInitialize(0)
+                Go2Backend._channel_initialized = True
+
+            client = SportClient()
+            client.SetTimeout(5.0)
+            client.Init()
+
+            def _on_state(msg):
+                with self._state_lock:
+                    self._latest_lowstate = msg
+
+            sub = ChannelSubscriber("rt/lowstate", LowState_)
+            sub.Init(_on_state, 10)
+
+            self._sport_client = client
+            self._state_sub = sub
+            return True
+        except Exception:
+            return False
+
+    def _check_rc(self, rc: int, command: str) -> None:
+        if rc != 0:
+            raise RuntimeError(f"Go2 command '{command}' failed with code {rc}")
+
     def is_connected(self) -> bool:
+        if self._backend_mode == "unitree_sdk2py":
+            if self._sport_client is None:
+                return False
+            code, _ = self._sport_client.GetServerApiVersion()
+            return code == 0
         return self._robot.is_connected()
 
     def observe(self) -> Dict[str, torch.Tensor]:
+        if self._backend_mode == "unitree_sdk2py":
+            with self._state_lock:
+                low_state = self._latest_lowstate
+
+            if low_state is None:
+                positions = torch.zeros(12, dtype=torch.float32)
+                velocities = torch.zeros(12, dtype=torch.float32)
+                orientation = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float32)
+                angular_vel = torch.zeros(3, dtype=torch.float32)
+                linear_acc = torch.zeros(3, dtype=torch.float32)
+            else:
+                positions = torch.tensor(
+                    [m.q for m in low_state.motor_state[:12]], dtype=torch.float32
+                )
+                velocities = torch.tensor(
+                    [m.dq for m in low_state.motor_state[:12]], dtype=torch.float32
+                )
+                imu = low_state.imu_state
+                orientation = torch.tensor(list(imu.quaternion), dtype=torch.float32)
+                angular_vel = torch.tensor(list(imu.gyroscope), dtype=torch.float32)
+                linear_acc = torch.tensor(list(imu.accelerometer), dtype=torch.float32)
+
+            raw_state = torch.cat(
+                [positions, velocities, orientation, angular_vel, linear_acc]
+            ).unsqueeze(0)
+
+            return make_observation(
+                state=raw_state,
+                state_dim=self.config.state_dim,
+                max_state_dim=self.config.max_state_dim,
+                device="cpu",
+            )
+
         state = self._robot.state()
         positions = torch.tensor(state.joint_positions(), dtype=torch.float32)
         velocities = torch.tensor(state.joint_velocities(), dtype=torch.float32)
@@ -54,7 +151,9 @@ class Go2Backend:
         angular_vel = torch.tensor(imu.gyroscope, dtype=torch.float32)
         linear_acc = torch.tensor(imu.accelerometer, dtype=torch.float32)
 
-        raw_state = torch.cat([positions, velocities, orientation, angular_vel, linear_acc]).unsqueeze(0)
+        raw_state = torch.cat(
+            [positions, velocities, orientation, angular_vel, linear_acc]
+        ).unsqueeze(0)
 
         return make_observation(
             state=raw_state,
@@ -64,6 +163,15 @@ class Go2Backend:
         )
 
     def act(self, action: torch.Tensor) -> None:
+        if self._backend_mode == "unitree_sdk2py":
+            if self.edu_mode:
+                raise RuntimeError("EDU mode is not supported with unitree_sdk2py backend")
+            vx = action[0, 0].item()
+            vy = action[0, 1].item()
+            vyaw = action[0, 2].item()
+            self._check_rc(self._sport_client.Move(vx, vy, vyaw), "Move")
+            return
+
         if not self.edu_mode:
             vx = action[0, 0].item()
             vy = action[0, 1].item()
@@ -76,22 +184,49 @@ class Go2Backend:
             self._robot.set_motor_positions(list(action_12dof), kp, kd)
 
     def reset(self) -> Dict[str, torch.Tensor]:
+        if self._backend_mode == "unitree_sdk2py":
+            self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
+            return self.observe()
         self._robot.stand()
         return self.observe()
 
     def go_home(self) -> None:
+        if self._backend_mode == "unitree_sdk2py":
+            self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
+            return
         self._robot.stand()
 
     def disconnect(self) -> None:
+        if self._backend_mode == "unitree_sdk2py":
+            if self._sport_client is not None:
+                try:
+                    self._sport_client.StopMove()
+                except Exception:
+                    pass
+            if self._state_sub is not None:
+                try:
+                    self._state_sub.Close()
+                except Exception:
+                    pass
+            return
         self._robot.disconnect()
 
     def stand(self) -> None:
+        if self._backend_mode == "unitree_sdk2py":
+            self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
+            return
         self._robot.stand()
 
     def sit(self) -> None:
+        if self._backend_mode == "unitree_sdk2py":
+            self._check_rc(self._sport_client.Sit(), "Sit")
+            return
         self._robot.sit()
 
     def walk(self, vx: float, vy: float, vyaw: float) -> None:
+        if self._backend_mode == "unitree_sdk2py":
+            self._check_rc(self._sport_client.Move(vx, vy, vyaw), "Move")
+            return
         self._robot.walk(vx, vy, vyaw)
 
 
@@ -100,4 +235,5 @@ class Go2Robot:
 
     def __new__(cls, ip_address: str = "192.168.123.161", **kwargs):
         from .base import RealRobot
+
         return RealRobot(config=GO2_CONFIG, robot_type="go2", ip_address=ip_address, **kwargs)
