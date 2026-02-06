@@ -5,6 +5,7 @@ rfx.real.go2 - Unitree Go2 hardware backend
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import threading
 from typing import TYPE_CHECKING, Dict, Optional
@@ -47,6 +48,9 @@ class Go2Backend:
         if not self.edu_mode and backend_pref in {"auto", "unitree", "unitree_sdk2py"}:
             if self._init_unitree_sdk_backend():
                 self._backend_mode = "unitree_sdk2py"
+                return
+            if self._init_unitree_subprocess_backend():
+                self._backend_mode = "unitree_subprocess"
                 return
 
         try:
@@ -101,16 +105,85 @@ class Go2Backend:
         if rc != 0:
             raise RuntimeError(f"Go2 command '{command}' failed with code {rc}")
 
+    def _init_unitree_subprocess_backend(self) -> bool:
+        check = (
+            "import sys; "
+            'sys.path.insert(0, "/unitree/module/pet_go"); '
+            "from unitree_sdk2py.go2.sport.sport_client import SportClient"
+        )
+        try:
+            p = subprocess.run(
+                ["python3", "-c", check],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=3.0,
+                check=False,
+            )
+            return p.returncode == 0
+        except Exception:
+            return False
+
+    def _run_unitree_cmd(self, command: str, *args: float) -> int:
+        if command == "Move":
+            cmd_expr = f"c.Move({args[0]}, {args[1]}, {args[2]})"
+        elif command in {"Sit", "RiseSit", "RecoveryStand", "StopMove", "GetServerApiVersion"}:
+            cmd_expr = f"c.{command}()"
+        else:
+            raise RuntimeError(f"Unsupported command for unitree subprocess backend: {command}")
+
+        if command == "GetServerApiVersion":
+            py = (
+                "import sys; "
+                'sys.path.insert(0, "/unitree/module/pet_go"); '
+                "from unitree_sdk2py.core.channel import ChannelFactoryInitialize; "
+                "from unitree_sdk2py.go2.sport.sport_client import SportClient; "
+                "ChannelFactoryInitialize(0); "
+                "c=SportClient(); c.SetTimeout(5.0); c.Init(); "
+                "rc,_=c.GetServerApiVersion(); "
+                "print(rc)"
+            )
+        else:
+            py = (
+                "import sys; "
+                'sys.path.insert(0, "/unitree/module/pet_go"); '
+                "from unitree_sdk2py.core.channel import ChannelFactoryInitialize; "
+                "from unitree_sdk2py.go2.sport.sport_client import SportClient; "
+                "ChannelFactoryInitialize(0); "
+                "c=SportClient(); c.SetTimeout(5.0); c.Init(); "
+                f"rc={cmd_expr}; "
+                "print(rc)"
+            )
+
+        p = subprocess.run(
+            ["python3", "-c", py],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=6.0,
+            check=False,
+        )
+        if p.returncode != 0:
+            raise RuntimeError(
+                f"unitree subprocess command failed (rc={p.returncode}): {p.stderr.strip()}"
+            )
+        out = p.stdout.strip().splitlines()
+        if not out:
+            return -1
+        return int(out[-1])
+
     def is_connected(self) -> bool:
         if self._backend_mode == "unitree_sdk2py":
             if self._sport_client is None:
                 return False
             code, _ = self._sport_client.GetServerApiVersion()
             return code == 0
+        if self._backend_mode == "unitree_subprocess":
+            return self._run_unitree_cmd("GetServerApiVersion") == 0
         return self._robot.is_connected()
 
     def observe(self) -> Dict[str, torch.Tensor]:
-        if self._backend_mode == "unitree_sdk2py":
+        if self._backend_mode in {"unitree_sdk2py", "unitree_subprocess"}:
             with self._state_lock:
                 low_state = self._latest_lowstate
 
@@ -171,6 +244,14 @@ class Go2Backend:
             vyaw = action[0, 2].item()
             self._check_rc(self._sport_client.Move(vx, vy, vyaw), "Move")
             return
+        if self._backend_mode == "unitree_subprocess":
+            if self.edu_mode:
+                raise RuntimeError("EDU mode is not supported with unitree subprocess backend")
+            vx = action[0, 0].item()
+            vy = action[0, 1].item()
+            vyaw = action[0, 2].item()
+            self._check_rc(self._run_unitree_cmd("Move", vx, vy, vyaw), "Move")
+            return
 
         if not self.edu_mode:
             vx = action[0, 0].item()
@@ -187,12 +268,18 @@ class Go2Backend:
         if self._backend_mode == "unitree_sdk2py":
             self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
             return self.observe()
+        if self._backend_mode == "unitree_subprocess":
+            self._check_rc(self._run_unitree_cmd("RecoveryStand"), "RecoveryStand")
+            return self.observe()
         self._robot.stand()
         return self.observe()
 
     def go_home(self) -> None:
         if self._backend_mode == "unitree_sdk2py":
             self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
+            return
+        if self._backend_mode == "unitree_subprocess":
+            self._check_rc(self._run_unitree_cmd("RecoveryStand"), "RecoveryStand")
             return
         self._robot.stand()
 
@@ -209,11 +296,20 @@ class Go2Backend:
                 except Exception:
                     pass
             return
+        if self._backend_mode == "unitree_subprocess":
+            try:
+                self._run_unitree_cmd("StopMove")
+            except Exception:
+                pass
+            return
         self._robot.disconnect()
 
     def stand(self) -> None:
         if self._backend_mode == "unitree_sdk2py":
             self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
+            return
+        if self._backend_mode == "unitree_subprocess":
+            self._check_rc(self._run_unitree_cmd("RecoveryStand"), "RecoveryStand")
             return
         self._robot.stand()
 
@@ -221,11 +317,17 @@ class Go2Backend:
         if self._backend_mode == "unitree_sdk2py":
             self._check_rc(self._sport_client.Sit(), "Sit")
             return
+        if self._backend_mode == "unitree_subprocess":
+            self._check_rc(self._run_unitree_cmd("Sit"), "Sit")
+            return
         self._robot.sit()
 
     def walk(self, vx: float, vy: float, vyaw: float) -> None:
         if self._backend_mode == "unitree_sdk2py":
             self._check_rc(self._sport_client.Move(vx, vy, vyaw), "Move")
+            return
+        if self._backend_mode == "unitree_subprocess":
+            self._check_rc(self._run_unitree_cmd("Move", vx, vy, vyaw), "Move")
             return
         self._robot.walk(vx, vy, vyaw)
 
