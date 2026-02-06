@@ -23,6 +23,7 @@ class Go2Backend:
     """Unitree Go2 hardware backend using Rust DDS driver."""
 
     _channel_initialized = False
+    _system_python = "/usr/bin/python3"
 
     def __init__(
         self,
@@ -113,7 +114,7 @@ class Go2Backend:
         )
         try:
             p = subprocess.run(
-                ["python3", "-c", check],
+                [self._system_python, "-c", check],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -156,7 +157,7 @@ class Go2Backend:
             )
 
         p = subprocess.run(
-            ["python3", "-c", py],
+            [self._system_python, "-c", py],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
