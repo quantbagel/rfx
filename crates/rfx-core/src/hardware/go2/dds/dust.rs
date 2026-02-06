@@ -5,16 +5,24 @@
 //! with full DDS protocol support.
 
 use parking_lot::RwLock;
+use std::sync::atomic::AtomicI64;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use dust_dds::{
+    configuration::DustDdsConfigurationBuilder,
+    domain::domain_participant_factory::DomainParticipantFactory,
+    infrastructure::{qos::QosKind, status::NO_STATUS},
+    topic_definition::type_support::DdsType,
+};
+
+use super::super::{Go2Config, LowCmd, LowState, SportModeCmd};
 use super::backend::DdsBackend;
 use super::messages::{LowCmdDds, SportModeRequestDds};
-use super::super::{Go2Config, LowCmd, LowState, SportModeCmd};
 use crate::comm::{bounded_channel, Receiver, Sender};
-use crate::{Error, Result};
+use crate::Error;
 
 /// Domain ID for Go2 DDS communication
 const DDS_DOMAIN_ID: i32 = 0;
@@ -45,8 +53,62 @@ struct DdsHandle {
     domain_id: i32,
 }
 
+#[derive(Debug, Clone, DdsType)]
+struct RequestIdentityWire {
+    id: i64,
+    api_id: i64,
+}
+
+#[derive(Debug, Clone, DdsType)]
+struct RequestLeaseWire {
+    id: i64,
+}
+
+#[derive(Debug, Clone, DdsType)]
+struct RequestPolicyWire {
+    priority: i32,
+    noreply: bool,
+}
+
+#[derive(Debug, Clone, DdsType)]
+struct RequestHeaderWire {
+    identity: RequestIdentityWire,
+    lease: RequestLeaseWire,
+    policy: RequestPolicyWire,
+}
+
+#[derive(Debug, Clone, DdsType)]
+struct RequestWire {
+    header: RequestHeaderWire,
+    parameter: String,
+    binary: Vec<u8>,
+}
+
+fn monotonic_like_request_id() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos() as i64)
+        .unwrap_or(0)
+}
+
+fn sport_request_to_wire(cmd: &SportModeRequestDds, req_id: i64, no_reply: bool) -> RequestWire {
+    let api_id = cmd.header.api_id as i64;
+    RequestWire {
+        header: RequestHeaderWire {
+            identity: RequestIdentityWire { id: req_id, api_id },
+            lease: RequestLeaseWire { id: 0 },
+            policy: RequestPolicyWire {
+                priority: 0,
+                noreply: no_reply,
+            },
+        },
+        parameter: cmd.parameter.clone(),
+        binary: Vec::new(),
+    }
+}
+
 impl DdsBackend for DustDdsBackend {
-    fn new(config: &Go2Config) -> Result<Self>
+    fn new(config: &Go2Config) -> crate::Result<Self>
     where
         Self: Sized,
     {
@@ -54,7 +116,9 @@ impl DdsBackend for DustDdsBackend {
         let (state_tx, state_rx) = bounded_channel::<LowState>(100);
         let (low_cmd_tx, low_cmd_rx) = bounded_channel::<LowCmdDds>(100);
         let (sport_cmd_tx, sport_cmd_rx) = bounded_channel::<SportModeRequestDds>(100);
-        let handle = Arc::new(RwLock::new(DdsHandle { domain_id: DDS_DOMAIN_ID }));
+        let handle = Arc::new(RwLock::new(DdsHandle {
+            domain_id: DDS_DOMAIN_ID,
+        }));
 
         // Start DDS worker threads
         let connected_clone = connected.clone();
@@ -85,7 +149,7 @@ impl DdsBackend for DustDdsBackend {
         })
     }
 
-    fn publish_low_cmd(&self, cmd: &LowCmd) -> Result<()> {
+    fn publish_low_cmd(&self, cmd: &LowCmd) -> crate::Result<()> {
         if !self.is_connected() {
             return Err(Error::Connection("Not connected to robot".into()));
         }
@@ -96,7 +160,7 @@ impl DdsBackend for DustDdsBackend {
             .map_err(|_| Error::Communication("Failed to send low command".into()))
     }
 
-    fn publish_sport_cmd(&self, cmd: &SportModeCmd) -> Result<()> {
+    fn publish_sport_cmd(&self, cmd: &SportModeCmd) -> crate::Result<()> {
         if !self.is_connected() {
             return Err(Error::Connection("Not connected to robot".into()));
         }
@@ -127,7 +191,7 @@ impl DustDdsBackend {
         low_cmd_rx: Receiver<LowCmdDds>,
         sport_cmd_rx: Receiver<SportModeRequestDds>,
         config: Go2Config,
-    ) -> Result<()> {
+    ) -> crate::Result<()> {
         // Start DDS state reader thread
         let connected_reader = connected.clone();
         let _config_reader = config.clone();
@@ -137,8 +201,9 @@ impl DustDdsBackend {
 
         // Start DDS command writer thread
         let connected_writer = connected.clone();
+        let config_writer = config.clone();
         thread::spawn(move || {
-            dds_command_writer(connected_writer, low_cmd_rx, sport_cmd_rx);
+            dds_command_writer(connected_writer, low_cmd_rx, sport_cmd_rx, config_writer);
         });
 
         Ok(())
@@ -155,10 +220,7 @@ impl Drop for DustDdsBackend {
 ///
 /// This thread reads state messages from the DDS network and
 /// sends them to the state channel.
-fn dds_state_reader(
-    connected: Arc<AtomicBool>,
-    state_tx: Sender<LowState>,
-) {
+fn dds_state_reader(connected: Arc<AtomicBool>, state_tx: Sender<LowState>) {
     // Initialize DDS participant and reader
     // For now, this creates a simulated state source
     // Real implementation would use dust_dds participant
@@ -200,35 +262,97 @@ fn dds_command_writer(
     connected: Arc<AtomicBool>,
     low_cmd_rx: Receiver<LowCmdDds>,
     sport_cmd_rx: Receiver<SportModeRequestDds>,
+    config: Go2Config,
 ) {
-    // Initialize DDS participant and writers
-    // For now, this logs commands
-    // Real implementation would use dust_dds participant
+    let participant_factory = DomainParticipantFactory::get_instance();
+    if let Some(interface_name) = config.network_interface.clone() {
+        if let Ok(configuration) = DustDdsConfigurationBuilder::new()
+            .interface_name(Some(interface_name))
+            .build()
+        {
+            let _ = participant_factory.set_configuration(configuration);
+        }
+    }
+
+    let participant = match participant_factory.create_participant(
+        config.dds_domain_id,
+        QosKind::Default,
+        None,
+        NO_STATUS,
+    ) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!("Failed to create DDS participant: {:?}", e);
+            connected.store(false, Ordering::Relaxed);
+            return;
+        }
+    };
+
+    let topic = match participant.create_topic::<RequestWire>(
+        "rt/api/sport/request",
+        "unitree_api.msg.dds_.Request_",
+        QosKind::Default,
+        None,
+        NO_STATUS,
+    ) {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to create sport request topic: {:?}", e);
+            connected.store(false, Ordering::Relaxed);
+            return;
+        }
+    };
+
+    let publisher = match participant.create_publisher(QosKind::Default, None, NO_STATUS) {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!("Failed to create DDS publisher: {:?}", e);
+            connected.store(false, Ordering::Relaxed);
+            return;
+        }
+    };
+
+    let writer = match publisher.create_datawriter(&topic, QosKind::Default, None, NO_STATUS) {
+        Ok(w) => w,
+        Err(e) => {
+            tracing::error!("Failed to create sport request writer: {:?}", e);
+            connected.store(false, Ordering::Relaxed);
+            return;
+        }
+    };
+
+    let req_id = AtomicI64::new(monotonic_like_request_id());
 
     tracing::debug!("DDS command writer started");
 
     while connected.load(Ordering::Relaxed) {
-        // Process low-level commands
         if let Ok(Some(cmd)) = low_cmd_rx.try_recv() {
-            // TODO: Write to DDS
-            // writer.write(&cmd, None)?;
-            tracing::trace!("Low command: tick={}, crc={}", cmd.head[0], cmd.crc);
+            tracing::trace!(
+                "Low command queued but direct publish not implemented: tick={}, crc={}",
+                cmd.head[0],
+                cmd.crc
+            );
         }
 
-        // Process sport mode commands
         if let Ok(Some(cmd)) = sport_cmd_rx.try_recv() {
-            // TODO: Write to DDS
-            // writer.write(&cmd, None)?;
-            tracing::trace!("Sport command: api_id={}", cmd.header.api_id);
+            let id = req_id.fetch_add(1, Ordering::Relaxed);
+            let wire = sport_request_to_wire(&cmd, id, true);
+            if let Err(e) = writer.write(&wire, None) {
+                tracing::warn!(
+                    "Failed to publish sport request api_id={}: {:?}",
+                    cmd.header.api_id,
+                    e
+                );
+            } else {
+                tracing::trace!("Sport command sent: api_id={}", cmd.header.api_id);
+            }
         }
 
-        // Small sleep to prevent busy-waiting
         thread::sleep(Duration::from_micros(500));
     }
 
     tracing::debug!("DDS command writer stopped");
 }
-
 /// Convert SportModeCmd to DDS format
 fn sport_cmd_to_dds(cmd: &SportModeCmd) -> SportModeRequestDds {
     match cmd.mode {
