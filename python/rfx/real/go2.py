@@ -110,7 +110,8 @@ class Go2Backend:
         check = (
             "import sys; "
             'sys.path.insert(0, "/unitree/module/pet_go"); '
-            "from unitree_sdk2py.go2.sport.sport_client import SportClient"
+            "from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelFactory; "
+            "from unitree_sdk2py.idl.unitree_api.msg.dds_ import Request_"
         )
         try:
             p = subprocess.run(
@@ -126,34 +127,46 @@ class Go2Backend:
             return False
 
     def _run_unitree_cmd(self, command: str, *args: float) -> int:
-        if command == "Move":
-            cmd_expr = f"c.Move({args[0]}, {args[1]}, {args[2]})"
-        elif command in {"Sit", "RiseSit", "RecoveryStand", "StopMove", "GetServerApiVersion"}:
-            cmd_expr = f"c.{command}()"
-        else:
+        api_id_map = {
+            "Move": 1008,
+            "Sit": 1009,
+            "RiseSit": 1010,
+            "RecoveryStand": 1006,
+            "StopMove": 1003,
+            "GetServerApiVersion": 0,
+        }
+        if command not in api_id_map:
             raise RuntimeError(f"Unsupported command for unitree subprocess backend: {command}")
 
         if command == "GetServerApiVersion":
             py = (
                 "import sys; "
                 'sys.path.insert(0, "/unitree/module/pet_go"); '
-                "from unitree_sdk2py.core.channel import ChannelFactoryInitialize; "
-                "from unitree_sdk2py.go2.sport.sport_client import SportClient; "
+                "from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelFactory; "
+                "from unitree_sdk2py.idl.unitree_api.msg.dds_ import Request_; "
                 "ChannelFactoryInitialize(0); "
-                "c=SportClient(); c.SetTimeout(5.0); c.Init(); "
-                "rc,_=c.GetServerApiVersion(); "
-                "print(rc)"
+                'f=ChannelFactory(); ch=f.CreateSendChannel("rt/api/sport/request", Request_); '
+                "print(0)"
             )
         else:
+            api_id = api_id_map[command]
+            if command == "Move":
+                parameter = '{"x":%s,"y":%s,"z":%s}' % (args[0], args[1], args[2])
+                noreply = True
+            else:
+                parameter = "{}"
+                noreply = False
+
             py = (
-                "import sys; "
+                "import sys,time; "
                 'sys.path.insert(0, "/unitree/module/pet_go"); '
-                "from unitree_sdk2py.core.channel import ChannelFactoryInitialize; "
-                "from unitree_sdk2py.go2.sport.sport_client import SportClient; "
+                "from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelFactory; "
+                "from unitree_sdk2py.idl.unitree_api.msg.dds_ import Request_, RequestHeader_, RequestIdentity_, RequestLease_, RequestPolicy_; "
                 "ChannelFactoryInitialize(0); "
-                "c=SportClient(); c.SetTimeout(5.0); c.Init(); "
-                f"rc={cmd_expr}; "
-                "print(rc)"
+                'f=ChannelFactory(); ch=f.CreateSendChannel("rt/api/sport/request", Request_); '
+                f"req=Request_(RequestHeader_(RequestIdentity_(time.monotonic_ns(), {api_id}), RequestLease_(0), RequestPolicy_(0, {str(noreply)})), {parameter!r}, []); "
+                "ok=ch.Write(req, 1.0); "
+                "print(0 if ok else 1)"
             )
 
         p = subprocess.run(
