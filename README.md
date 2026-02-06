@@ -19,9 +19,9 @@ uv pip install git+https://github.com/quantbagel/rfx.git
 
 ## Development
 
-Requires Rust and Python 3.8+.
+Requires Rust and Python 3.10+.
 
 ```bash
 # Install in development mode
-pip install -e .
+uv pip install -e .
 ```

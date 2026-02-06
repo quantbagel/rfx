@@ -212,7 +212,7 @@ class Go2Env(BaseEnv):
     def _init_sim_backend(self, config: Any) -> None:
         """Initialize simulation backend."""
         try:
-            from _rfx import MockSimBackend, SimConfig
+            from ._rfx import MockSimBackend, SimConfig
 
             if config is None:
                 config = SimConfig.mock()
@@ -226,7 +226,7 @@ class Go2Env(BaseEnv):
     def _init_real_backend(self, robot_ip: str | None) -> None:
         """Initialize real robot backend."""
         try:
-            from _rfx import Go2, Go2Config
+            from ._rfx import Go2, Go2Config
 
             config = Go2Config()
             if robot_ip:
