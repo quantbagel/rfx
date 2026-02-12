@@ -54,8 +54,8 @@ run_lint() {
   local python_bin="$1"
   require_python_module "$python_bin" ruff
 
-  "$python_bin" -m ruff check --select E9,F63,F7,F82 rfx/python/
-  "$python_bin" -m ruff format --check rfx/python/
+  "$python_bin" -m ruff check --select E9,F63,F7,F82 rfx/python/ rfxJIT/
+  "$python_bin" -m ruff format --check rfx/python/ rfxJIT/
 }
 
 run_typecheck() {
@@ -81,7 +81,7 @@ run_test() {
   local python_bin="$1"
   require_python_module "$python_bin" pytest
 
-  PYTHONPATH="$ROOT/rfx/python:${PYTHONPATH:-}" "$python_bin" -m pytest rfx/tests/ -q
+  PYTHONPATH="$ROOT:$ROOT/rfx/python:${PYTHONPATH:-}" "$python_bin" -m pytest rfx/tests/ rfxJIT/tests/ -q
 }
 
 run_build() {

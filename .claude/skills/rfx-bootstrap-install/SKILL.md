@@ -32,5 +32,5 @@ scripts/python-checks.sh lint
 
 - The script enables repo-managed git hooks (`.githooks`).
 - Source dependencies are tracked in `requirements.txt` and `requirements-dev.txt`.
-- Python checks run against `rfx/python` and `rfx/tests`.
+- Python checks run against `rfx/python`, `rfx/tests`, and `rfxJIT`.
 - `uv` is required for the source setup flow.

@@ -35,6 +35,7 @@ This script resolves Python from `.venv` first, then `python3`/`python`.
 It runs checks against:
 - `rfx/python/`
 - `rfx/tests/`
+- `rfxJIT/`
 
 For full-package mypy, use `scripts/python-checks.sh typecheck-full` (or set `RFX_TYPECHECK_FULL=1` with `ci`).
 

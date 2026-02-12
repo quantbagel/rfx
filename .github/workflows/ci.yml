@@ -121,10 +121,10 @@ jobs:
         run: pip install ruff
 
       - name: Run ruff check
-        run: ruff check --select E9,F63,F7,F82 rfx/python/
+        run: ruff check --select E9,F63,F7,F82 rfx/python/ rfxJIT/
 
       - name: Run ruff format check
-        run: ruff format --check rfx/python/
+        run: ruff format --check rfx/python/ rfxJIT/
 
   python-typecheck:
     name: Python Type Check (mypy subset)
@@ -184,7 +184,7 @@ jobs:
 
       - name: Run Python tests
         run: |
-          pytest rfx/tests/ -v --cov=rfx --cov-report=xml --cov-report=term-missing
+          pytest rfx/tests/ rfxJIT/tests/ -v --cov=rfx --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
