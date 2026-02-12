@@ -6,7 +6,14 @@ import numpy as np
 import pytest
 
 from rfx.decorators import policy
-from rfx.jit import PolicyJitRuntime, grad, rfx_jit_backend, value_and_grad
+from rfx.jit import (
+    PolicyJitRuntime,
+    available_backends,
+    grad,
+    rfx_jit_backend,
+    rfx_jit_strict,
+    value_and_grad,
+)
 from rfxJIT.runtime.tinyjit import jit_relu
 
 
@@ -73,3 +80,51 @@ def test_rfx_jit_backend_env_parse(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setenv("RFX_JIT_BACKEND", "invalid")
     assert rfx_jit_backend() == "auto"
+
+
+def test_rfx_jit_strict_env_parse(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RFX_JIT_STRICT", "1")
+    assert rfx_jit_strict() is True
+
+    monkeypatch.setenv("RFX_JIT_STRICT", "no")
+    assert rfx_jit_strict() is False
+
+
+def test_available_backends_shape() -> None:
+    backends = available_backends()
+    assert set(backends.keys()) == {"cpu", "cuda", "metal"}
+    assert backends["cpu"] is True
+
+
+class _AlwaysFailJit:
+    compile_count = 0
+
+    def __call__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        raise RuntimeError("forced jit failure")
+
+    def close(self) -> None:
+        return None
+
+
+def test_policy_runtime_falls_back_on_jit_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("RFX_JIT_STRICT", raising=False)
+
+    runtime = PolicyJitRuntime(lambda x: x + 1, fallback=lambda x: x + 2, name="fallback_test")
+    runtime._rfx_jit = _AlwaysFailJit()  # type: ignore[attr-defined]
+
+    x = np.array([1.0, 2.0], dtype=np.float32)
+    got = runtime(x)
+    np.testing.assert_allclose(got, x + 2, atol=1e-6)
+    assert runtime.has_rfx_jit is False
+    assert runtime.rfx_jit_error is not None
+
+
+def test_policy_runtime_strict_raises_on_jit_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RFX_JIT_STRICT", "1")
+
+    runtime = PolicyJitRuntime(lambda x: x + 1, fallback=lambda x: x + 2, name="strict_test")
+    runtime._rfx_jit = _AlwaysFailJit()  # type: ignore[attr-defined]
+
+    x = np.array([1.0, 2.0], dtype=np.float32)
+    with pytest.raises(RuntimeError, match="forced jit failure"):
+        runtime(x)

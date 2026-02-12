@@ -44,6 +44,8 @@ def test_resolve_backend_auto_is_available() -> None:
 def test_compile_cpu_and_execute_matches_numpy() -> None:
     lowered = _make_lowered()
     compiled = compile_lowered_kernel(lowered, backend="cpu")
+    assert compiled.source is None
+    assert "store out" in compiled.pseudo_asm
 
     rng = np.random.default_rng(0)
     x = rng.standard_normal((16,), dtype=np.float32)
@@ -77,6 +79,23 @@ def test_compile_unavailable_gpu_backend_errors() -> None:
     if not avail["metal"]:
         with pytest.raises(RuntimeError, match="unavailable"):
             compile_lowered_kernel(lowered, backend="metal")
+
+
+def test_compile_available_gpu_backends_emit_source() -> None:
+    lowered = _make_lowered()
+    avail = available_backends()
+
+    if avail["cuda"]:
+        compiled_cuda = compile_lowered_kernel(lowered, backend="cuda")
+        assert compiled_cuda.source is not None
+        assert "__global__" in compiled_cuda.source
+        assert "store out" in compiled_cuda.pseudo_asm
+
+    if avail["metal"]:
+        compiled_metal = compile_lowered_kernel(lowered, backend="metal")
+        assert compiled_metal.source is not None
+        assert "kernel void" in compiled_metal.source
+        assert "store out" in compiled_metal.pseudo_asm
 
 
 def test_tinyjit_auto_backend_executes() -> None:

@@ -3,6 +3,9 @@ rfxJIT integration helpers for rfx runtime paths.
 
 Enable with:
     RFX_JIT=1
+Optional:
+    RFX_JIT_BACKEND=auto|cpu|cuda|metal
+    RFX_JIT_STRICT=1
 """
 
 from __future__ import annotations
@@ -15,6 +18,7 @@ import numpy as np
 
 RFX_JIT_ENV_VAR = "RFX_JIT"
 RFX_JIT_BACKEND_ENV_VAR = "RFX_JIT_BACKEND"
+RFX_JIT_STRICT_ENV_VAR = "RFX_JIT_STRICT"
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 
 
@@ -29,6 +33,21 @@ def rfx_jit_backend() -> str:
     if value not in {"auto", "cpu", "cuda", "metal"}:
         return "auto"
     return value
+
+
+def rfx_jit_strict() -> bool:
+    """Return True when backend initialization/execution failures should raise."""
+    return os.getenv(RFX_JIT_STRICT_ENV_VAR, "").strip().lower() in _TRUE_VALUES
+
+
+def available_backends() -> dict[str, bool]:
+    """Return rfxJIT runtime backend availability."""
+    try:
+        from rfxJIT.runtime.executor import available_backends as _available_backends
+
+        return _available_backends()
+    except Exception:
+        return {"cpu": True, "cuda": False, "metal": False}
 
 
 def _numpy_tensor_args(args: tuple[Any, ...], kwargs: dict[str, Any]) -> bool:
@@ -103,7 +122,13 @@ class PolicyJitRuntime:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if self._rfx_jit is not None and _numpy_tensor_args(args, kwargs):
-            return self._rfx_jit(*args)
+            try:
+                return self._rfx_jit(*args)
+            except Exception as exc:
+                if rfx_jit_strict():
+                    raise
+                self._rfx_jit_error = exc
+                self._rfx_jit = None
         return self._fallback(*args, **kwargs)
 
 
@@ -144,11 +169,14 @@ def grad(
 
 
 __all__ = [
+    "RFX_JIT_STRICT_ENV_VAR",
     "RFX_JIT_BACKEND_ENV_VAR",
     "RFX_JIT_ENV_VAR",
     "PolicyJitRuntime",
+    "available_backends",
     "grad",
     "rfx_jit_backend",
     "rfx_jit_enabled",
+    "rfx_jit_strict",
     "value_and_grad",
 ]

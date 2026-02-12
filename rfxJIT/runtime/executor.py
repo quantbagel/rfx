@@ -7,7 +7,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from rfxJIT.kernels.codegen import emit_cuda_kernel_source, emit_metal_kernel_source
+from rfxJIT.kernels.codegen import (
+    emit_cuda_kernel_source,
+    emit_metal_kernel_source,
+    emit_pseudo_asm,
+)
 from rfxJIT.kernels.ir import OpCode, TensorSpec
 from rfxJIT.kernels.lowering import LoweredKernel, LoweredOp
 
@@ -205,6 +209,7 @@ class CompiledKernel:
     kernel: LoweredKernel
     backend: str
     source: str | None = None
+    pseudo_asm: str = ""
 
 
 def available_backends() -> dict[str, bool]:
@@ -250,7 +255,12 @@ def compile_lowered_kernel(
         source = emit_cuda_kernel_source(kernel, fn_name=kernel.name)
     elif resolved == "metal":
         source = emit_metal_kernel_source(kernel, fn_name=kernel.name)
-    return CompiledKernel(kernel=kernel, backend=resolved, source=source)
+    return CompiledKernel(
+        kernel=kernel,
+        backend=resolved,
+        source=source,
+        pseudo_asm=emit_pseudo_asm(kernel),
+    )
 
 
 def execute_compiled_kernel(

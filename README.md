@@ -12,6 +12,7 @@
 ```bash
 export RFX_JIT=1
 export RFX_JIT_BACKEND=auto  # auto|cpu|cuda|metal
+export RFX_JIT_STRICT=0      # 1 to raise if requested backend fails
 ```
 
 With `RFX_JIT=1`, `@rfx.policy(jit=True)` can route NumPy policy calls through
