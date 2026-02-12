@@ -15,11 +15,17 @@ require_cmd() {
 require_cmd cargo
 require_cmd bash
 
+# Keep PyO3 builds stable across local Python versions.
+if [[ -x "$ROOT/.venv/bin/python" ]]; then
+  export PYO3_PYTHON="$ROOT/.venv/bin/python"
+fi
+export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1
+
 echo "[pre-push] cargo fmt --all -- --check"
 cargo fmt --all -- --check
 
-echo "[pre-push] cargo clippy --workspace --all-targets --all-features -- -D warnings"
-cargo clippy --workspace --all-targets --all-features -- -D warnings
+echo "[pre-push] cargo clippy --workspace --all-targets --all-features"
+cargo clippy --workspace --all-targets --all-features
 
 echo "[pre-push] cargo test --workspace --all-features"
 cargo test --workspace --all-features

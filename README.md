@@ -42,7 +42,7 @@ uv pip install -e '.[dev]'
 
 What runs:
 - `pre-commit`: `cargo fmt --all -- --check`, then Ruff on staged Python files.
-- `pre-push`: Rust fmt/clippy/tests plus Python Ruff/mypy/pytest across the repo.
+- `pre-push`: Rust fmt/clippy/tests plus Python Ruff/mypy subset/pytest.
 
 ## Moon (Monorepo Task Runner)
 
@@ -58,3 +58,4 @@ Typical commands:
 - `moon run :build`
 
 Python Moon tasks are backed by `scripts/python-checks.sh`.
+Use `scripts/python-checks.sh typecheck-full` (or `RFX_TYPECHECK_FULL=1 scripts/python-checks.sh ci`) for full-package mypy.

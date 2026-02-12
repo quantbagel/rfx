@@ -10,4 +10,4 @@ git config core.hooksPath .githooks
 
 echo "Git hooks enabled via core.hooksPath=.githooks"
 echo "pre-commit: cargo fmt + ruff (staged Python files)"
-echo "pre-push: fmt, clippy, tests, ruff, mypy, pytest"
+echo "pre-push: fmt, clippy, tests, ruff, mypy subset, pytest"

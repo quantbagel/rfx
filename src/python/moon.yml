@@ -10,6 +10,10 @@ tasks:
     command: "../../scripts/python-checks.sh"
     args: ["typecheck"]
 
+  typecheckFull:
+    command: "../../scripts/python-checks.sh"
+    args: ["typecheck-full"]
+
   test:
     command: "../../scripts/python-checks.sh"
     args: ["test"]

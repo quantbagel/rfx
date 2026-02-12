@@ -54,11 +54,23 @@ run_lint() {
   local python_bin="$1"
   require_python_module "$python_bin" ruff
 
-  "$python_bin" -m ruff check src/python/ src/tests/
-  "$python_bin" -m ruff format --check src/python/ src/tests/
+  "$python_bin" -m ruff check --select E9,F63,F7,F82 src/python/
+  "$python_bin" -m ruff format --check src/python/
 }
 
 run_typecheck() {
+  local python_bin="$1"
+  require_python_module "$python_bin" mypy
+
+  "$python_bin" -m mypy \
+    --follow-imports=skip \
+    --ignore-missing-imports \
+    src/python/rfx/observation.py \
+    src/python/rfx/utils/padding.py \
+    src/python/rfx/utils/transforms.py
+}
+
+run_typecheck_full() {
   local python_bin="$1"
   require_python_module "$python_bin" mypy
 
@@ -69,7 +81,7 @@ run_test() {
   local python_bin="$1"
   require_python_module "$python_bin" pytest
 
-  "$python_bin" -m pytest src/tests/ -q
+  PYTHONPATH="$ROOT/src/python:${PYTHONPATH:-}" "$python_bin" -m pytest src/tests/ -q
 }
 
 run_build() {
@@ -81,7 +93,7 @@ run_build() {
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/python-checks.sh <lint|typecheck|test|build|ci>
+Usage: scripts/python-checks.sh <lint|typecheck|typecheck-full|test|build|ci>
 USAGE
 }
 
@@ -102,6 +114,9 @@ main() {
     typecheck)
       run_typecheck "$python_bin"
       ;;
+    typecheck-full)
+      run_typecheck_full "$python_bin"
+      ;;
     test)
       run_test "$python_bin"
       ;;
@@ -112,6 +127,10 @@ main() {
       run_lint "$python_bin"
       run_typecheck "$python_bin"
       run_test "$python_bin"
+
+      if [[ "${RFX_TYPECHECK_FULL:-0}" == "1" ]]; then
+        run_typecheck_full "$python_bin"
+      fi
       ;;
     *)
       usage

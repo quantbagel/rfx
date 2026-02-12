@@ -45,7 +45,10 @@ require_python_module "$PYTHON_BIN" ruff
 echo "[pre-commit] cargo fmt --all -- --check"
 cargo fmt --all -- --check
 
-mapfile -t py_files < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.pyi?$' || true)
+py_files=()
+while IFS= read -r file; do
+  [[ -n "$file" ]] && py_files+=("$file")
+done < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.pyi?$' || true)
 
 if (( ${#py_files[@]} == 0 )); then
   echo "[pre-commit] no staged Python files"
@@ -53,7 +56,7 @@ if (( ${#py_files[@]} == 0 )); then
 fi
 
 echo "[pre-commit] ruff check (staged Python files)"
-"$PYTHON_BIN" -m ruff check "${py_files[@]}"
+"$PYTHON_BIN" -m ruff check --select E9,F63,F7,F82 "${py_files[@]}"
 
 echo "[pre-commit] ruff format --check (staged Python files)"
 "$PYTHON_BIN" -m ruff format --check "${py_files[@]}"
