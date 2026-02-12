@@ -13,6 +13,7 @@ North star: make `rfxJIT` the default high-performance execution engine for
 
 - IR to executable kernel lowering prototype. (initial version landed)
 - Runtime queue for kernel dispatch. (single-worker version landed)
+- Backend targets scaffolded for `cpu` / `cuda` / `metal`. (landed)
 - Validation tests on deterministic kernels. (lowering + queue tests landed)
 
 ## Phase 2: Optimization

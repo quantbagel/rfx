@@ -26,6 +26,7 @@ def benchmark_affine_relu(
     iterations: int,
     warmup: int,
     seed: int,
+    backend: str = "cpu",
 ) -> dict[str, float]:
     """Benchmark baseline, phase 0 IR, phase 1 lowered, and phase 2 optimized paths."""
     if iterations <= 0:
@@ -46,14 +47,19 @@ def benchmark_affine_relu(
     lowered_kernel = lower_kernel_ir(kernel)
     lowered_optimized_kernel = lower_kernel_ir(optimized_kernel)
 
-    with KernelDispatchQueue(autostart=True) as dispatch:
+    with KernelDispatchQueue(autostart=True, backend=backend) as dispatch:
         for _ in range(warmup):
             baseline_affine_relu(x, scale, bias)
             execute_kernel(kernel, {"x": x, "scale": scale, "bias": bias})
-            execute_lowered_kernel(lowered_kernel, {"x": x, "scale": scale, "bias": bias})
+            execute_lowered_kernel(
+                lowered_kernel,
+                {"x": x, "scale": scale, "bias": bias},
+                backend=backend,
+            )
             execute_lowered_kernel(
                 lowered_optimized_kernel,
                 {"x": x, "scale": scale, "bias": bias},
+                backend=backend,
             )
             dispatch.submit(lowered_kernel, {"x": x, "scale": scale, "bias": bias}).result()
 
@@ -69,7 +75,11 @@ def benchmark_affine_relu(
 
     lowered_start = time.perf_counter()
     for _ in range(iterations):
-        y_lowered = execute_lowered_kernel(lowered_kernel, {"x": x, "scale": scale, "bias": bias})
+        y_lowered = execute_lowered_kernel(
+            lowered_kernel,
+            {"x": x, "scale": scale, "bias": bias},
+            backend=backend,
+        )
     lowered_time = time.perf_counter() - lowered_start
 
     lowered_optimized_start = time.perf_counter()
@@ -77,10 +87,11 @@ def benchmark_affine_relu(
         y_lowered_optimized = execute_lowered_kernel(
             lowered_optimized_kernel,
             {"x": x, "scale": scale, "bias": bias},
+            backend=backend,
         )
     lowered_optimized_time = time.perf_counter() - lowered_optimized_start
 
-    with KernelDispatchQueue(autostart=True) as dispatch:
+    with KernelDispatchQueue(autostart=True, backend=backend) as dispatch:
         queue_start = time.perf_counter()
         for _ in range(iterations):
             y_queue = dispatch.submit(
@@ -128,6 +139,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--iterations", type=int, default=200, help="Timing iterations")
     parser.add_argument("--warmup", type=int, default=10, help="Warmup iterations")
     parser.add_argument("--seed", type=int, default=42, help="RNG seed")
+    parser.add_argument("--backend", type=str, default="cpu", help="Execution backend")
     return parser
 
 
@@ -138,6 +150,7 @@ def main() -> None:
         iterations=args.iterations,
         warmup=args.warmup,
         seed=args.seed,
+        backend=args.backend,
     )
 
     print("rfxJIT phase0/2 benchmark")

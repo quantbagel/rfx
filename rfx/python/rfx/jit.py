@@ -14,12 +14,21 @@ from typing import Any
 import numpy as np
 
 RFX_JIT_ENV_VAR = "RFX_JIT"
+RFX_JIT_BACKEND_ENV_VAR = "RFX_JIT_BACKEND"
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 
 
 def rfx_jit_enabled() -> bool:
     """Return True when rfxJIT-backed execution is enabled."""
     return os.getenv(RFX_JIT_ENV_VAR, "").strip().lower() in _TRUE_VALUES
+
+
+def rfx_jit_backend() -> str:
+    """Requested rfxJIT backend: auto/cpu/cuda/metal."""
+    value = os.getenv(RFX_JIT_BACKEND_ENV_VAR, "auto").strip().lower()
+    if value not in {"auto", "cpu", "cuda", "metal"}:
+        return "auto"
+    return value
 
 
 def _numpy_tensor_args(args: tuple[Any, ...], kwargs: dict[str, Any]) -> bool:
@@ -61,13 +70,16 @@ class PolicyJitRuntime:
             try:
                 from rfxJIT.runtime.tinyjit import TinyRfxJit
 
-                self._rfx_jit = TinyRfxJit(fn, name=self._name)
+                self._rfx_jit = TinyRfxJit(fn, name=self._name, backend=rfx_jit_backend())
             except Exception as exc:  # pragma: no cover - defensive import/trace fallback
                 self._rfx_jit_error = exc
 
     @property
     def backend(self) -> str:
         if self._rfx_jit is not None:
+            active = getattr(self._rfx_jit, "active_backends", ())
+            if active:
+                return "+".join(active)
             return "auto"
         return "fallback"
 
@@ -132,9 +144,11 @@ def grad(
 
 
 __all__ = [
+    "RFX_JIT_BACKEND_ENV_VAR",
     "RFX_JIT_ENV_VAR",
     "PolicyJitRuntime",
     "grad",
+    "rfx_jit_backend",
     "rfx_jit_enabled",
     "value_and_grad",
 ]

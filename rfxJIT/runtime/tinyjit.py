@@ -10,10 +10,10 @@ from typing import Any
 import numpy as np
 
 from rfxJIT.kernels.ad import grad_kernels
-from rfxJIT.kernels.lowering import LoweredKernel, lower_kernel_ir
+from rfxJIT.kernels.lowering import lower_kernel_ir
 from rfxJIT.kernels.optimize import optimize_kernel_ir
 from rfxJIT.kernels.trace import KernelTracer, TracedTensor
-from rfxJIT.runtime.executor import execute_lowered_kernel
+from rfxJIT.runtime.executor import CompiledKernel, compile_lowered_kernel, execute_compiled_kernel
 from rfxJIT.runtime.queue import KernelDispatchQueue
 
 Array = np.ndarray[Any, Any]
@@ -50,7 +50,7 @@ def _normalize_argnums(argnums: Argnums, arity: int) -> tuple[int, ...]:
 @dataclass
 class _CompiledPlan:
     arg_names: tuple[str, ...]
-    lowered: LoweredKernel
+    compiled: CompiledKernel
     queue: KernelDispatchQueue | None
 
 
@@ -58,8 +58,8 @@ class _CompiledPlan:
 class _CompiledGradPlan:
     arg_names: tuple[str, ...]
     argnums: tuple[int, ...]
-    lowered_forward: LoweredKernel
-    lowered_grads: dict[int, LoweredKernel]
+    compiled_forward: CompiledKernel
+    compiled_grads: dict[int, CompiledKernel]
     queue: KernelDispatchQueue | None
 
 
@@ -67,8 +67,8 @@ class TinyRfxJit:
     """
     tinyJIT-style wrapper for elementwise kernels.
 
-    - first call for a new signature: trace -> optimize -> lower
-    - subsequent calls: execute cached lowered kernel
+    - first call for a new signature: trace -> optimize -> lower -> backend compile
+    - subsequent calls: execute cached compiled kernel
     """
 
     def __init__(
@@ -78,13 +78,16 @@ class TinyRfxJit:
         name: str | None = None,
         optimize: bool = True,
         use_queue: bool = False,
+        backend: str = "cpu",
     ):
         self._fn = fn
         self._name = name or fn.__name__
         self._optimize = optimize
         self._use_queue = use_queue
+        self._backend = backend
         self._plans: dict[SignatureKey, _CompiledPlan] = {}
         self._compile_count = 0
+        self._resolved_backends: set[str] = set()
 
         sig = inspect.signature(fn)
         params = list(sig.parameters.values())
@@ -95,6 +98,14 @@ class TinyRfxJit:
     @property
     def compile_count(self) -> int:
         return self._compile_count
+
+    @property
+    def backend(self) -> str:
+        return self._backend
+
+    @property
+    def active_backends(self) -> tuple[str, ...]:
+        return tuple(sorted(self._resolved_backends))
 
     def clear_cache(self) -> None:
         self.close()
@@ -121,8 +132,8 @@ class TinyRfxJit:
 
         named_inputs = dict(zip(plan.arg_names, arrays, strict=True))
         if plan.queue is not None:
-            return plan.queue.submit(plan.lowered, named_inputs).result()
-        return execute_lowered_kernel(plan.lowered, named_inputs)
+            return plan.queue.submit(plan.compiled.kernel, named_inputs).result()
+        return execute_compiled_kernel(plan.compiled, named_inputs)
 
     def _signature_key(self, arrays: tuple[Array, ...]) -> SignatureKey:
         return tuple((arr.shape, str(arr.dtype)) for arr in arrays)
@@ -149,10 +160,12 @@ class TinyRfxJit:
             kernel = optimize_kernel_ir(kernel)
 
         lowered = lower_kernel_ir(kernel)
-        queue = KernelDispatchQueue() if self._use_queue else None
+        compiled = compile_lowered_kernel(lowered, backend=self._backend)
+        self._resolved_backends.add(compiled.backend)
+        queue = KernelDispatchQueue(backend=compiled.backend) if self._use_queue else None
         return _CompiledPlan(
             arg_names=self._param_names,
-            lowered=lowered,
+            compiled=compiled,
             queue=queue,
         )
 
@@ -172,14 +185,17 @@ class TinyRfxValueAndGrad:
         name: str | None = None,
         optimize: bool = True,
         use_queue: bool = False,
+        backend: str = "cpu",
     ):
         self._fn = fn
         self._name = name or fn.__name__
         self._argnums = argnums
         self._optimize = optimize
         self._use_queue = use_queue
+        self._backend = backend
         self._plans: dict[SignatureKey, _CompiledGradPlan] = {}
         self._compile_count = 0
+        self._resolved_backends: set[str] = set()
 
         sig = inspect.signature(fn)
         params = list(sig.parameters.values())
@@ -191,6 +207,14 @@ class TinyRfxValueAndGrad:
     @property
     def compile_count(self) -> int:
         return self._compile_count
+
+    @property
+    def backend(self) -> str:
+        return self._backend
+
+    @property
+    def active_backends(self) -> tuple[str, ...]:
+        return tuple(sorted(self._resolved_backends))
 
     def clear_cache(self) -> None:
         self.close()
@@ -217,15 +241,15 @@ class TinyRfxValueAndGrad:
         named_inputs = dict(zip(plan.arg_names, arrays, strict=True))
 
         if plan.queue is not None:
-            value = plan.queue.submit(plan.lowered_forward, named_inputs).result()
+            value = plan.queue.submit(plan.compiled_forward.kernel, named_inputs).result()
             grads = tuple(
-                plan.queue.submit(plan.lowered_grads[idx], named_inputs).result()
+                plan.queue.submit(plan.compiled_grads[idx].kernel, named_inputs).result()
                 for idx in plan.argnums
             )
         else:
-            value = execute_lowered_kernel(plan.lowered_forward, named_inputs)
+            value = execute_compiled_kernel(plan.compiled_forward, named_inputs)
             grads = tuple(
-                execute_lowered_kernel(plan.lowered_grads[idx], named_inputs)
+                execute_compiled_kernel(plan.compiled_grads[idx], named_inputs)
                 for idx in plan.argnums
             )
 
@@ -258,19 +282,23 @@ class TinyRfxValueAndGrad:
         grad_bundle = grad_kernels(forward, wrt=wrt_names)
 
         lowered_forward = lower_kernel_ir(grad_bundle.forward)
-        lowered_grads: dict[int, LoweredKernel] = {}
+        compiled_forward = compile_lowered_kernel(lowered_forward, backend=self._backend)
+        compiled_grads: dict[int, CompiledKernel] = {}
         for idx in self._argnums_tuple:
             grad_kernel = grad_bundle.grads[self._param_names[idx]]
             if self._optimize:
                 grad_kernel = optimize_kernel_ir(grad_kernel)
-            lowered_grads[idx] = lower_kernel_ir(grad_kernel)
+            lowered_grad = lower_kernel_ir(grad_kernel)
+            compiled_grads[idx] = compile_lowered_kernel(lowered_grad, backend=self._backend)
 
-        queue = KernelDispatchQueue() if self._use_queue else None
+        self._resolved_backends.add(compiled_forward.backend)
+        self._resolved_backends.update(compiled.backend for compiled in compiled_grads.values())
+        queue = KernelDispatchQueue(backend=compiled_forward.backend) if self._use_queue else None
         return _CompiledGradPlan(
             arg_names=self._param_names,
             argnums=self._argnums_tuple,
-            lowered_forward=lowered_forward,
-            lowered_grads=lowered_grads,
+            compiled_forward=compiled_forward,
+            compiled_grads=compiled_grads,
             queue=queue,
         )
 
@@ -286,6 +314,7 @@ class TinyRfxGrad:
         name: str | None = None,
         optimize: bool = True,
         use_queue: bool = False,
+        backend: str = "cpu",
     ):
         self._inner = TinyRfxValueAndGrad(
             fn,
@@ -293,6 +322,7 @@ class TinyRfxGrad:
             name=name,
             optimize=optimize,
             use_queue=use_queue,
+            backend=backend,
         )
 
     @property
@@ -317,6 +347,7 @@ def value_and_grad(
     name: str | None = None,
     optimize: bool = True,
     use_queue: bool = False,
+    backend: str = "cpu",
 ) -> TinyRfxValueAndGrad:
     """Return a callable that computes `(value, grad)`."""
 
@@ -326,6 +357,7 @@ def value_and_grad(
         name=name,
         optimize=optimize,
         use_queue=use_queue,
+        backend=backend,
     )
 
 
@@ -336,6 +368,7 @@ def grad(
     name: str | None = None,
     optimize: bool = True,
     use_queue: bool = False,
+    backend: str = "cpu",
 ) -> TinyRfxGrad:
     """Return a callable that computes gradients only."""
 
@@ -345,4 +378,5 @@ def grad(
         name=name,
         optimize=optimize,
         use_queue=use_queue,
+        backend=backend,
     )

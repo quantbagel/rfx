@@ -26,10 +26,11 @@ class KernelDispatchQueue:
 
     _STOP = object()
 
-    def __init__(self, *, maxsize: int = 0, autostart: bool = True):
+    def __init__(self, *, maxsize: int = 0, autostart: bool = True, backend: str = "cpu"):
         self._queue: Queue[_DispatchRequest | object] = Queue(maxsize=maxsize)
         self._thread: Thread | None = None
         self._closed = False
+        self._backend = backend
         if autostart:
             self.start()
 
@@ -88,7 +89,11 @@ class KernelDispatchQueue:
 
                 assert isinstance(item, _DispatchRequest)
                 try:
-                    result = execute_lowered_kernel(item.kernel, item.named_inputs)
+                    result = execute_lowered_kernel(
+                        item.kernel,
+                        item.named_inputs,
+                        backend=self._backend,
+                    )
                 except Exception as exc:
                     item.future.set_exception(exc)
                 else:

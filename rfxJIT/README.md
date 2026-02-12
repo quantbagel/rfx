@@ -37,7 +37,7 @@ tiny and hackable.
 
 - define a small, explicit IR for kernels
 - prototype scheduling + fusion passes
-- benchmark generated kernels against baseline paths
+- benchmark generated kernels against baseline paths across `cpu/cuda/metal` targets
 
 ## Layout
 
@@ -56,7 +56,7 @@ tiny and hackable.
 ## Phase 1 Status
 
 - IR lowering to slot-based executable form: `rfxJIT/kernels/lowering.py`
-- lowered-kernel executor: `rfxJIT/runtime/executor.py`
+- lowered-kernel executor + backend compiler (`cpu`, `cuda`, `metal`): `rfxJIT/runtime/executor.py`
 - single-worker dispatch queue: `rfxJIT/runtime/queue.py`
 - lowering/queue tests: `rfxJIT/tests/test_lowering_queue.py`
 

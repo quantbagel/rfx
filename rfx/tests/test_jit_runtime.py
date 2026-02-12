@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from rfx.decorators import policy
-from rfx.jit import PolicyJitRuntime, grad, value_and_grad
+from rfx.jit import PolicyJitRuntime, grad, rfx_jit_backend, value_and_grad
 from rfxJIT.runtime.tinyjit import jit_relu
 
 
@@ -65,3 +65,11 @@ def test_value_and_grad_matches_manual_derivative(monkeypatch: pytest.MonkeyPatc
 
     np.testing.assert_allclose(value, expected_value, atol=1e-6)
     np.testing.assert_allclose(dx, expected_dx, atol=1e-6)
+
+
+def test_rfx_jit_backend_env_parse(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RFX_JIT_BACKEND", "cuda")
+    assert rfx_jit_backend() == "cuda"
+
+    monkeypatch.setenv("RFX_JIT_BACKEND", "invalid")
+    assert rfx_jit_backend() == "auto"
