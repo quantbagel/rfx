@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+require_cmd() {
+  local tool="$1"
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "Missing required command: $tool" >&2
+    exit 1
+  fi
+}
+
+require_cmd cargo
+require_cmd bash
+
+echo "[pre-push] cargo fmt --all -- --check"
+cargo fmt --all -- --check
+
+echo "[pre-push] cargo clippy --workspace --all-targets --all-features -- -D warnings"
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+echo "[pre-push] cargo test --workspace --all-features"
+cargo test --workspace --all-features
+
+echo "[pre-push] python lint + typecheck + tests"
+"$ROOT/scripts/python-checks.sh" ci
+
+echo "[pre-push] all checks passed"

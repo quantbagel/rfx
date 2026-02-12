@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+resolve_python() {
+  if [[ -x "$ROOT/.venv/bin/python" ]]; then
+    echo "$ROOT/.venv/bin/python"
+    return
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    command -v python3
+    return
+  fi
+
+  if command -v python >/dev/null 2>&1; then
+    command -v python
+    return
+  fi
+
+  echo "No Python interpreter found. Create .venv or install python3." >&2
+  exit 1
+}
+
+require_python_module() {
+  local python_bin="$1"
+  local module_name="$2"
+  if ! "$python_bin" -m "$module_name" --version >/dev/null 2>&1; then
+    echo "Missing Python tool: $module_name" >&2
+    echo "Install dev tools with: uv pip install -e '.[dev]'" >&2
+    exit 1
+  fi
+}
+
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "cargo is required for Rust formatting checks." >&2
+  exit 1
+fi
+
+PYTHON_BIN="$(resolve_python)"
+require_python_module "$PYTHON_BIN" ruff
+
+echo "[pre-commit] cargo fmt --all -- --check"
+cargo fmt --all -- --check
+
+mapfile -t py_files < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.pyi?$' || true)
+
+if (( ${#py_files[@]} == 0 )); then
+  echo "[pre-commit] no staged Python files"
+  exit 0
+fi
+
+echo "[pre-commit] ruff check (staged Python files)"
+"$PYTHON_BIN" -m ruff check "${py_files[@]}"
+
+echo "[pre-commit] ruff format --check (staged Python files)"
+"$PYTHON_BIN" -m ruff format --check "${py_files[@]}"
