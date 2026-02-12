@@ -2,7 +2,7 @@
 
 Top-level layout:
 
-- `src/`: production and test source code
+- `rfx/`: production and test source code
 - `docs/`: architecture, workflows, and contributor guides
 - `rfxJIT/`: JIT and compiler-oriented experiments
 - `cli/`: command-line interfaces and helpers

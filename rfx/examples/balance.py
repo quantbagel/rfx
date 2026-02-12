@@ -90,8 +90,8 @@ def main():
         # Print status every 100 iterations
         if iteration % 100 == 0:
             print(
-                f"[{iteration:5d}] roll={roll*57.3:6.2f}° pitch={pitch*57.3:6.2f}° "
-                f"dt={dt*1000:.2f}ms corr=({roll_correction:.3f}, {pitch_correction:.3f})"
+                f"[{iteration:5d}] roll={roll * 57.3:6.2f}° pitch={pitch * 57.3:6.2f}° "
+                f"dt={dt * 1000:.2f}ms corr=({roll_correction:.3f}, {pitch_correction:.3f})"
             )
 
         return iteration < max_iterations

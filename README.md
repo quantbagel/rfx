@@ -6,7 +6,7 @@ uv pip install git+https://github.com/quantbagel/rfx.git
 
 ## Monorepo Layout
 
-- `src/`: source tree (`crates/`, `python/`, `tests/`, `configs/`, `examples/`)
+- `rfx/`: source tree (`crates/`, `python/`, `tests/`, `configs/`, `examples/`)
 - `docs/`: documentation
 - `rfxJIT/`: JIT-related work area
 - `cli/`: command-line tooling
@@ -49,7 +49,7 @@ What runs:
 
 This repo now has a Moon workspace:
 - Workspace config: `.moon/workspace.yml`
-- Project configs: `src/crates/rfx-core/moon.yml`, `src/crates/rfx-python/moon.yml`, `src/python/moon.yml`
+- Project configs: `rfx/crates/rfx-core/moon.yml`, `rfx/crates/rfx-python/moon.yml`, `rfx/python/moon.yml`
 
 Typical commands:
 - `moon run :format`

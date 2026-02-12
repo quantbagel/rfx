@@ -29,5 +29,5 @@ scripts/python-checks.sh lint
 ## Notes
 
 - The script enables repo-managed git hooks (`.githooks`).
-- Python checks run against `src/python` and `src/tests`.
+- Python checks run against `rfx/python` and `rfx/tests`.
 - If `uv` is not installed, the script falls back to `python -m pip`.

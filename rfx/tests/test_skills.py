@@ -46,6 +46,7 @@ class TestSkillDecorator:
 
     def test_skill_decorator_parentheses_syntax(self) -> None:
         """Test @skill() syntax with parentheses."""
+
         @skill(name="test_skill", tags=["test"])
         def my_func() -> None:
             """A test function."""
@@ -57,6 +58,7 @@ class TestSkillDecorator:
 
     def test_skill_decorator_no_parentheses_syntax(self) -> None:
         """Test @skill syntax without parentheses."""
+
         @skill
         def my_func() -> None:
             """A test function."""
@@ -75,7 +77,9 @@ class TestSkillDecorator:
         result = decorated()
         assert result == "Walked 1.0m"
 
-    def test_skill_parameters_extraction(self, sample_skill_with_types: Callable[..., dict]) -> None:
+    def test_skill_parameters_extraction(
+        self, sample_skill_with_types: Callable[..., dict]
+    ) -> None:
         """Test that parameters are correctly extracted."""
         decorated = skill(sample_skill_with_types)
 
@@ -305,6 +309,7 @@ class TestExtractParameters:
 
     def test_extract_parameters_no_params(self) -> None:
         """Test extracting from function with no parameters."""
+
         def func() -> None:
             pass
 
@@ -314,6 +319,7 @@ class TestExtractParameters:
 
     def test_extract_parameters_with_defaults(self) -> None:
         """Test extracting parameters with defaults."""
+
         def func(x: int, y: int = 10) -> None:
             pass
 
@@ -326,6 +332,7 @@ class TestExtractParameters:
 
     def test_extract_parameters_self_excluded(self) -> None:
         """Test that self/cls are excluded."""
+
         class MyClass:
             def method(self, x: int) -> None:
                 pass
@@ -363,6 +370,7 @@ class TestPythonTypeToJsonType:
 
     def test_unknown_type(self) -> None:
         """Test unknown types default to string."""
+
         class CustomType:
             pass
 

@@ -5,9 +5,9 @@
 Use Moon as the top-level task runner for this Rust + Python monorepo.
 
 - Workspace: `.moon/workspace.yml`
-- Rust project config: `src/crates/rfx-core/moon.yml`
-- Rust bindings config: `src/crates/rfx-python/moon.yml`
-- Python project config: `src/python/moon.yml`
+- Rust project config: `rfx/crates/rfx-core/moon.yml`
+- Rust bindings config: `rfx/crates/rfx-python/moon.yml`
+- Python project config: `rfx/python/moon.yml`
 
 ## Moon Commands
 
@@ -32,8 +32,8 @@ scripts/python-checks.sh <lint|typecheck|typecheck-full|test|build|ci>
 This script resolves Python from `.venv` first, then `python3`/`python`.
 
 It runs checks against:
-- `src/python/`
-- `src/tests/`
+- `rfx/python/`
+- `rfx/tests/`
 
 For full-package mypy, use `scripts/python-checks.sh typecheck-full` (or set `RFX_TYPECHECK_FULL=1` with `ci`).
 
@@ -53,7 +53,7 @@ Enable hooks once per clone:
 
 ## Repo Layout
 
-- `src/`: core source tree (Rust crates, Python package, tests, configs, examples)
+- `rfx/`: core source tree (Rust crates, Python package, tests, configs, examples)
 - `docs/`: project documentation and architecture notes
 - `rfxJIT/`: JIT-focused experiments and prototypes
 - `cli/`: command-line tooling surface

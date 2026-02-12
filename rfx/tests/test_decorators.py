@@ -11,6 +11,7 @@ class TestControlLoopDecorator:
 
     def test_control_loop_default(self) -> None:
         """Test decorator with default settings."""
+
         @control_loop()
         def my_policy(state: Any) -> Any:
             """Test policy."""
@@ -23,6 +24,7 @@ class TestControlLoopDecorator:
 
     def test_control_loop_custom_rate(self) -> None:
         """Test decorator with custom rate."""
+
         @control_loop(rate_hz=1000.0)
         def fast_policy(state: Any) -> Any:
             """Fast policy."""
@@ -32,6 +34,7 @@ class TestControlLoopDecorator:
 
     def test_control_loop_custom_name(self) -> None:
         """Test decorator with custom name."""
+
         @control_loop(name="balance")
         def my_policy(state: Any) -> Any:
             """Balance policy."""
@@ -41,6 +44,7 @@ class TestControlLoopDecorator:
 
     def test_control_loop_preserves_function(self) -> None:
         """Test that decorated function still works."""
+
         @control_loop(rate_hz=100.0)
         def double_it(x: int) -> int:
             """Double the input."""
@@ -51,6 +55,7 @@ class TestControlLoopDecorator:
 
     def test_control_loop_preserves_docstring(self) -> None:
         """Test that docstring is preserved."""
+
         @control_loop()
         def documented_policy(state: Any) -> Any:
             """This is the docstring."""
@@ -60,6 +65,7 @@ class TestControlLoopDecorator:
 
     def test_control_loop_preserves_name(self) -> None:
         """Test that function name is preserved."""
+
         @control_loop()
         def original_name(state: Any) -> Any:
             """Test."""
@@ -73,6 +79,7 @@ class TestPolicyDecorator:
 
     def test_policy_default(self) -> None:
         """Test decorator with default settings."""
+
         @policy()
         def my_policy(state: Any) -> Any:
             """Test policy."""
@@ -85,6 +92,7 @@ class TestPolicyDecorator:
 
     def test_policy_with_model_raises(self) -> None:
         """Test that specifying model raises NotImplementedError."""
+
         @policy(model="walking.onnx")
         def neural_policy(state: Any) -> Any:
             """Neural policy."""
@@ -95,6 +103,7 @@ class TestPolicyDecorator:
 
     def test_policy_with_jit(self) -> None:
         """Test decorator with JIT flag."""
+
         @policy(jit=True)
         def jit_policy(state: Any) -> Any:
             """JIT policy."""
@@ -104,6 +113,7 @@ class TestPolicyDecorator:
 
     def test_policy_preserves_function(self) -> None:
         """Test that decorated function still works (when no model)."""
+
         @policy()
         def passthrough(x: int) -> int:
             """Pass through."""
@@ -114,6 +124,7 @@ class TestPolicyDecorator:
 
     def test_policy_preserves_docstring(self) -> None:
         """Test that docstring is preserved."""
+
         @policy()
         def documented_policy(state: Any) -> Any:
             """Policy documentation."""
