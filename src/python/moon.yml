@@ -1,0 +1,19 @@
+language: "python"
+type: "library"
+
+tasks:
+  lint:
+    command: "../../scripts/python-checks.sh"
+    args: ["lint"]
+
+  typecheck:
+    command: "../../scripts/python-checks.sh"
+    args: ["typecheck"]
+
+  test:
+    command: "../../scripts/python-checks.sh"
+    args: ["test"]
+
+  build:
+    command: "../../scripts/python-checks.sh"
+    args: ["build"]

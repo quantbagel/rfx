@@ -1,0 +1,19 @@
+language: "rust"
+type: "library"
+
+tasks:
+  format:
+    command: "cargo"
+    args: ["fmt", "--all", "--", "--check"]
+
+  lint:
+    command: "cargo"
+    args: ["clippy", "-p", "rfx-core", "--all-targets", "--all-features", "--", "-D", "warnings"]
+
+  test:
+    command: "cargo"
+    args: ["test", "-p", "rfx-core", "--all-features"]
+
+  build:
+    command: "cargo"
+    args: ["build", "-p", "rfx-core", "--all-features"]

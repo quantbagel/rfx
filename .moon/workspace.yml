@@ -1,0 +1,10 @@
+$schema: "https://moonrepo.dev/schemas/workspace.json"
+
+projects:
+  rfx_core: "src/crates/rfx-core"
+  rfx_python: "src/crates/rfx-python"
+  rfx_py: "src/python"
+
+vcs:
+  manager: "git"
+  defaultBranch: "main"
