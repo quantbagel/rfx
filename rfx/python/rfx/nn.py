@@ -18,6 +18,8 @@ from typing import Any
 
 import numpy as np
 
+from .jit import PolicyJitRuntime
+
 try:
     from tinygrad import Tensor, dtypes
     from tinygrad.nn import Linear
@@ -193,7 +195,14 @@ class JitPolicy(Policy):
     def __init__(self, policy: Policy):
         _check_tinygrad()
         self._policy = policy
-        self._jit_forward = TinyJit(policy.forward)
+        fallback = TinyJit(policy.forward)
+        self._jit_runtime = PolicyJitRuntime(
+            policy.forward,
+            fallback=fallback,
+            name=f"{policy.__class__.__name__}_forward",
+        )
+        self._jit_forward = self._jit_runtime
+        self._rfx_jit_backend = self._jit_runtime.backend
 
     def forward(self, obs: Tensor) -> Tensor:
         return self._jit_forward(obs)

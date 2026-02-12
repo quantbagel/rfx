@@ -9,6 +9,8 @@ from __future__ import annotations
 import functools
 from typing import Any, Callable, Optional, TypeVar
 
+from .jit import PolicyJitRuntime
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 try:
@@ -72,8 +74,8 @@ def policy(
     """
     Decorator to mark a function as a neural policy.
 
-    When jit=True, the function will be JIT compiled using tinygrad's
-    TinyJit for optimized inference after the first call.
+    When jit=True, the function will be JIT compiled using tinygrad's TinyJit.
+    If `RFX_JIT=1`, NumPy tensor calls are routed through `rfxJIT`.
 
     Args:
         model: Optional model path. If provided, raises NotImplementedError at runtime.
@@ -106,6 +108,8 @@ def policy(
     """
 
     def decorator(func: F) -> F:
+        runtime: PolicyJitRuntime | None = None
+
         if model is not None:
 
             @functools.wraps(func)
@@ -114,23 +118,33 @@ def policy(
                     "Neural network policies from model files are not implemented yet."
                 )
         # Apply TinyJit if requested and available
-        elif jit and TINYGRAD_AVAILABLE:
-            jit_func = TinyJit(func)
+        elif jit:
+            if TINYGRAD_AVAILABLE:
+                fallback = TinyJit(func)
+            else:
+                fallback = func
+
+            runtime = PolicyJitRuntime(
+                func,
+                fallback=fallback,
+                name=func.__name__,
+            )
 
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
-                return jit_func(*args, **kwargs)
+                return runtime(*args, **kwargs)
         else:
 
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 return func(*args, **kwargs)
 
-        # Apply TinyJit if requested and available
         # Attach metadata
         wrapper._rfx_policy = True  # type: ignore
         wrapper._rfx_jit = jit  # type: ignore
         wrapper._rfx_model = model  # type: ignore
+        wrapper._rfx_jit_backend = runtime.backend if runtime is not None else "disabled"  # type: ignore
+        wrapper._rfx_jit_runtime = runtime  # type: ignore
         # Backward-compatible metadata aliases.
         wrapper._pi_policy = True  # type: ignore
         wrapper._pi_jit = jit  # type: ignore

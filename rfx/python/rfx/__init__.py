@@ -91,6 +91,7 @@ from .robot import Robot, RobotBase
 from .config import RobotConfig, CameraConfig, JointConfig, load_config
 from .observation import ObservationSpec, make_observation, unpad_action
 from . import utils
+from . import jit
 
 # Optional runtime dependencies (torch/camera stacks) are not required for
 # lightweight API/skill usage, so guard these imports.
@@ -140,6 +141,7 @@ __all__ = [
     "sim",
     "real",
     "utils",
+    "jit",
     # v1 API
     "__version__",
     "VERSION",

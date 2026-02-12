@@ -7,6 +7,15 @@
 - Long term, execution should be `rfxJIT`-first, reducing reliance on Python-to-Rust bindings.
 - Default collaboration flow is atomic commits pushed directly to `main`.
 
+`rfxJIT` runtime path is feature-flagged:
+
+```bash
+export RFX_JIT=1
+```
+
+With `RFX_JIT=1`, `@rfx.policy(jit=True)` can route NumPy policy calls through
+`rfxJIT` while preserving existing fallback behavior.
+
 ## Install From Source (Recommended)
 
 Prerequisites:
