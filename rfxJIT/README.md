@@ -18,3 +18,16 @@ Workstream for JIT-related systems in rfx:
 - `runtime/`: runtime execution plumbing prototypes
 - `kernels/`: kernel generation and lowering experiments
 - `ROADMAP.md`: milestone plan
+
+## Phase 0 Status
+
+- typed elementwise kernel IR: `rfxJIT/kernels/ir.py`
+- reference interpreter: `rfxJIT/runtime/interpreter.py`
+- benchmark harness: `rfxJIT/runtime/benchmark.py`
+- tests: `rfxJIT/tests/test_ir.py`
+
+Run the benchmark:
+
+```bash
+python -m rfxJIT.runtime.benchmark --size 65536 --iterations 200
+```
