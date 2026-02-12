@@ -14,8 +14,8 @@
 
 ## Phase 2: Optimization
 
-- Simple fusion pass (elementwise chains).
-- Constant folding and dead op elimination.
+- Simple fusion pass (elementwise chains). (initial version landed)
+- Constant folding and dead op elimination. (landed)
 - Cost model for launch vs fusion decisions.
 
 ## Phase 3: Integration

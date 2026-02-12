@@ -33,6 +33,13 @@ Workstream for JIT-related systems in rfx:
 - single-worker dispatch queue: `rfxJIT/runtime/queue.py`
 - lowering/queue tests: `rfxJIT/tests/test_lowering_queue.py`
 
+## Phase 2 Status
+
+- optimization passes: `rfxJIT/kernels/optimize.py`
+- constant folding + dead-op elimination + simple chain fusion
+- optimization tests: `rfxJIT/tests/test_optimize.py`
+- benchmark now reports op count before/after optimization
+
 Run the benchmark:
 
 ```bash
