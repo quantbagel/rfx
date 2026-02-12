@@ -19,6 +19,8 @@ Use this skill when a user asks to:
 bash .claude/skills/rfx-bootstrap-install/scripts/bootstrap.sh
 ```
 
+This delegates to `scripts/setup-from-source.sh` (uv venv + requirements + editable install + cargo fetch).
+
 2. If the user asks for verification, run:
 
 ```bash
@@ -29,5 +31,6 @@ scripts/python-checks.sh lint
 ## Notes
 
 - The script enables repo-managed git hooks (`.githooks`).
+- Source dependencies are tracked in `requirements.txt` and `requirements-dev.txt`.
 - Python checks run against `rfx/python` and `rfx/tests`.
-- If `uv` is not installed, the script falls back to `python -m pip`.
+- `uv` is required for the source setup flow.

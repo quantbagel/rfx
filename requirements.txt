@@ -1,0 +1,3 @@
+# Core runtime dependencies for local source installs.
+tinygrad>=0.9.0
+numpy>=1.24

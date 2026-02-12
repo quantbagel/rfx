@@ -6,7 +6,7 @@ cd "$ROOT"
 
 usage() {
   cat <<'USAGE'
-Usage: cli/rfx.sh <doctor|bootstrap|check>
+Usage: cli/rfx.sh <doctor|bootstrap|setup-source|check>
 USAGE
 }
 
@@ -30,6 +30,10 @@ bootstrap() {
   bash .claude/skills/rfx-bootstrap-install/scripts/bootstrap.sh
 }
 
+setup_source() {
+  bash scripts/setup-from-source.sh
+}
+
 check() {
   cargo fmt --all -- --check
   cargo clippy --workspace --all-targets --all-features -- -D warnings
@@ -48,6 +52,9 @@ main() {
       ;;
     bootstrap)
       bootstrap
+      ;;
+    setup-source)
+      setup_source
       ;;
     check)
       check
