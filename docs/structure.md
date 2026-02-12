@@ -13,3 +13,5 @@ Quality/tooling:
 - Hooks: `.githooks/`
 - Moon workspace: `.moon/workspace.yml`
 - Python check runner: `scripts/python-checks.sh`
+- Source setup runner: `scripts/setup-from-source.sh`
+- Workflow guide: `docs/workflow.md`

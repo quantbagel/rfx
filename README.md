@@ -1,5 +1,39 @@
 # rfx
 
+## Install From Source (Recommended)
+
+Prerequisites:
+- `uv`
+- `cargo`/Rust toolchain
+- `git`
+
+Clone + setup:
+
+```bash
+git clone https://github.com/quantbagel/rfx.git
+cd rfx
+bash scripts/setup-from-source.sh
+./scripts/setup-git-hooks.sh
+```
+
+Manual setup equivalent:
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -r requirements-dev.txt
+uv pip install --python .venv/bin/python -e .
+cargo fetch
+```
+
+Direct path install (from another repo or workspace):
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -e /absolute/path/to/rfx
+```
+
+Git URL install (without local source checkout):
+
 ```bash
 uv pip install git+https://github.com/quantbagel/rfx.git
 ```
@@ -8,6 +42,7 @@ uv pip install git+https://github.com/quantbagel/rfx.git
 
 - `rfx/`: source tree (`crates/`, `python/`, `tests/`, `configs/`, `examples/`)
 - `docs/`: documentation
+- `docs/workflow.md`: contributor and OSS workflow
 - `rfxJIT/`: JIT-related work area
 - `cli/`: command-line tooling
 - `.claude/skills/rfx-bootstrap-install/`: Claude skill for agent bootstrap
@@ -26,6 +61,12 @@ CLI shortcut:
 ./cli/rfx.sh bootstrap
 ```
 
+Direct source setup shortcut:
+
+```bash
+./cli/rfx.sh setup-source
+```
+
 ## Git Hooks (Quality Gates)
 
 Enable repo-managed hooks once per clone:
@@ -34,16 +75,12 @@ Enable repo-managed hooks once per clone:
 ./scripts/setup-git-hooks.sh
 ```
 
-Install dev tools used by hooks:
-
-```bash
-uv pip install -e '.[dev]'
-```
+Dev dependencies are defined in `requirements-dev.txt` for local source installs.
 
 What runs:
 - `pre-commit`: `cargo fmt --all -- --check`, then Ruff on staged Python files.
 - `pre-push`: Rust fmt/clippy/tests plus Python Ruff/mypy subset/pytest.
-- `pre-push` also blocks direct pushes from `main` (override with `RFX_ALLOW_MAIN_PUSH=1`).
+- Optionally block local direct pushes from `main` by setting `RFX_BLOCK_MAIN_PUSH=1`.
 
 ## Moon (Monorepo Task Runner)
 

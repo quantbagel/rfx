@@ -4,6 +4,7 @@
 
 Use Moon as the top-level task runner for this Rust + Python monorepo.
 
+- Source setup script: `scripts/setup-from-source.sh`
 - Workspace: `.moon/workspace.yml`
 - Rust project config: `rfx/crates/rfx-core/moon.yml`
 - Rust bindings config: `rfx/crates/rfx-python/moon.yml`
@@ -43,7 +44,7 @@ Repo-managed hooks are configured via `.githooks`:
 
 - `pre-commit`: Rust format check + Ruff on staged Python files
 - `pre-push`: Rust fmt/clippy/test + Python lint/typecheck subset/test
-- `pre-push` blocks direct pushes from `main` unless `RFX_ALLOW_MAIN_PUSH=1` is set.
+- Optional local main-push block: set `RFX_BLOCK_MAIN_PUSH=1`.
 
 Enable hooks once per clone:
 
@@ -51,10 +52,18 @@ Enable hooks once per clone:
 ./scripts/setup-git-hooks.sh
 ```
 
+Recommended first-time local setup:
+
+```bash
+bash scripts/setup-from-source.sh
+./scripts/setup-git-hooks.sh
+```
+
 ## Repo Layout
 
 - `rfx/`: core source tree (Rust crates, Python package, tests, configs, examples)
 - `docs/`: project documentation and architecture notes
+- `docs/workflow.md`: OSS workflow and PR hygiene
 - `rfxJIT/`: JIT-focused experiments and prototypes
 - `cli/`: command-line tooling surface
 - `.claude/skills/rfx-bootstrap-install/`: Claude skill for agent bootstrap/install
