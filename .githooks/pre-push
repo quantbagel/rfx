@@ -4,6 +4,14 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+if [[ "$current_branch" == "main" && "${RFX_ALLOW_MAIN_PUSH:-0}" != "1" ]]; then
+  echo "Direct pushes to 'main' are blocked."
+  echo "Push your branch and open a PR into main."
+  echo "Set RFX_ALLOW_MAIN_PUSH=1 to override intentionally."
+  exit 1
+fi
+
 require_cmd() {
   local tool="$1"
   if ! command -v "$tool" >/dev/null 2>&1; then

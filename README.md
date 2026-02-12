@@ -43,6 +43,7 @@ uv pip install -e '.[dev]'
 What runs:
 - `pre-commit`: `cargo fmt --all -- --check`, then Ruff on staged Python files.
 - `pre-push`: Rust fmt/clippy/tests plus Python Ruff/mypy subset/pytest.
+- `pre-push` also blocks direct pushes from `main` (override with `RFX_ALLOW_MAIN_PUSH=1`).
 
 ## Moon (Monorepo Task Runner)
 

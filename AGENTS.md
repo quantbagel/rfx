@@ -43,6 +43,7 @@ Repo-managed hooks are configured via `.githooks`:
 
 - `pre-commit`: Rust format check + Ruff on staged Python files
 - `pre-push`: Rust fmt/clippy/test + Python lint/typecheck subset/test
+- `pre-push` blocks direct pushes from `main` unless `RFX_ALLOW_MAIN_PUSH=1` is set.
 
 Enable hooks once per clone:
 
