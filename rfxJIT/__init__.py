@@ -1,4 +1,4 @@
-"""rfxJIT prototypes and experiments."""
+"""rfxJIT performance engine modules."""
 
 from rfxJIT.runtime.tinyjit import (
     TinyRfxGrad,

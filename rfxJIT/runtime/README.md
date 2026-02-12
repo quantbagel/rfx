@@ -1,6 +1,6 @@
-# Runtime Prototypes
+# Runtime Engine
 
-Execution orchestration experiments for JIT-generated kernels.
+Execution orchestration for JIT-generated kernels.
 
 Scope examples:
 - dispatch queues

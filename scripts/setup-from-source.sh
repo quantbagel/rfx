@@ -30,5 +30,8 @@ uv pip install --python "$PYTHON_BIN" -e "$ROOT"
 echo "[setup] fetching Rust crates"
 cargo fetch
 
+echo "[setup] installing git hooks via pre-commit"
+RFX_VENV_PATH="$VENV_PATH" bash "$ROOT/scripts/setup-git-hooks.sh"
+
 echo "[setup] complete"
 echo "[setup] activate with: source $VENV_PATH/bin/activate"

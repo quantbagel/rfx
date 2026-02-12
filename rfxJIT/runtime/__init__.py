@@ -1,4 +1,4 @@
-"""Runtime prototypes for rfxJIT."""
+"""Runtime components for rfxJIT."""
 
 from rfxJIT.runtime.executor import execute_lowered_kernel
 from rfxJIT.runtime.interpreter import execute_kernel

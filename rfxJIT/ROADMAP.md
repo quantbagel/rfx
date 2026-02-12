@@ -1,5 +1,8 @@
 # rfxJIT Roadmap
 
+North star: make `rfxJIT` the default high-performance execution engine for
+`rfx`, while keeping the compiler/runtime stack small and hackable.
+
 ## Phase 0: Foundations
 
 - Define IR surface for simple elementwise kernels.

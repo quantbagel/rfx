@@ -1,6 +1,6 @@
-# Kernel Prototypes
+# Kernel Engine
 
-Kernel IR and lowering experiments live here.
+Kernel IR, transforms, and lowering logic live here.
 
 Scope examples:
 - IR node definitions

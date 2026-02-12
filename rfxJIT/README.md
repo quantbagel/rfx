@@ -1,10 +1,10 @@
 # rfxJIT
 
-Workstream for JIT-related systems in rfx:
+Performance engine for JIT-related systems in rfx:
 
-- kernel lowering ideas
-- runtime execution plans
-- performance experiments
+- kernel lowering and scheduling
+- runtime execution paths
+- optimization and profiling passes
 
 rfxJIT is inspired by PyTorch (ergonomics), JAX (functional transforms and
 IR-based AD), and TVM (scheduling and codegen), while staying intentionally
@@ -42,8 +42,8 @@ tiny and hackable.
 ## Layout
 
 - `notes/`: architecture notes and design records
-- `runtime/`: runtime execution plumbing prototypes
-- `kernels/`: kernel generation and lowering experiments
+- `runtime/`: runtime execution components
+- `kernels/`: kernel IR, transforms, and lowering logic
 - `ROADMAP.md`: milestone plan
 
 ## Phase 0 Status

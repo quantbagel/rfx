@@ -1,5 +1,5 @@
 # Notes
 
-Design notes, assumptions, and experiments for `rfxJIT`.
+Design notes and assumptions for `rfxJIT`.
 
 Keep entries concise and date-stamped.

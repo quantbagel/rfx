@@ -1,4 +1,4 @@
-"""Phase 0 kernel IR for elementwise rfxJIT experiments."""
+"""Phase 0 kernel IR for elementwise rfxJIT kernels."""
 
 from __future__ import annotations
 

@@ -1,6 +1,7 @@
 # OSS Workflow
 
-This repo now follows a tinygrad-style flow: fast local iteration on `main`, atomic commits, and strong hooks/CI.
+This repo follows a tinygrad-style flow: fast local iteration on `main`,
+atomic commits, direct pushes to `main`, and strong local/CI gates.
 
 ## Default Loop (No Branch Churn)
 
@@ -15,7 +16,6 @@ git pull --ff-only origin main
 
 ```bash
 bash scripts/setup-from-source.sh
-./scripts/setup-git-hooks.sh
 ```
 
 3. Build and check while coding:
@@ -41,11 +41,11 @@ git push origin main
 
 ## When to Use a Branch + PR
 
-Use a short-lived branch only for bigger/riskier work:
+Branch + PR is optional and used only when it lowers risk:
 
 - large refactors
 - breaking API changes
-- experimental spikes you may discard
+- partial spikes you may discard
 
 ```bash
 git switch -c feat/<short-name>
@@ -54,7 +54,8 @@ git push -u origin feat/<short-name>
 
 ## Quality Gates
 
-- Local hooks (`pre-commit`, `pre-push`) prevent low-quality pushes.
+- Local hooks are installed via `pre-commit` and run at `pre-commit` and `pre-push`.
+- CI is a single workflow at `.github/workflows/ci.yml`.
 - CI runs on `main` and pull requests.
 - Optional local main-push block:
 
@@ -62,4 +63,8 @@ git push -u origin feat/<short-name>
 export RFX_BLOCK_MAIN_PUSH=1
 ```
 
-Use GitHub branch protection if you want hard server-side blocking of direct pushes.
+Install hooks manually (if you did not use setup script):
+
+```bash
+./.venv/bin/pre-commit install --install-hooks --hook-type pre-commit --hook-type pre-push
+```
