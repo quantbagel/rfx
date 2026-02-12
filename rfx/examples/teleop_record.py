@@ -67,9 +67,14 @@ def run_teleop(args):
                     recording = False
                     if len(trajectory) >= 10:
                         episode += 1
-                        filename = output_dir / f"demo_{episode:04d}_{datetime.now().strftime('%H%M%S')}.json"
+                        filename = (
+                            output_dir
+                            / f"demo_{episode:04d}_{datetime.now().strftime('%H%M%S')}.json"
+                        )
                         with open(filename, "w") as f:
-                            json.dump({"trajectory": [{"positions": t.tolist()} for t in trajectory]}, f)
+                            json.dump(
+                                {"trajectory": [{"positions": t.tolist()} for t in trajectory]}, f
+                            )
                         print(f"Saved: {filename}")
                     trajectory = []
                 else:

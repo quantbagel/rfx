@@ -54,8 +54,8 @@ run_lint() {
   local python_bin="$1"
   require_python_module "$python_bin" ruff
 
-  "$python_bin" -m ruff check --select E9,F63,F7,F82 src/python/
-  "$python_bin" -m ruff format --check src/python/
+  "$python_bin" -m ruff check --select E9,F63,F7,F82 rfx/python/
+  "$python_bin" -m ruff format --check rfx/python/
 }
 
 run_typecheck() {
@@ -65,23 +65,23 @@ run_typecheck() {
   "$python_bin" -m mypy \
     --follow-imports=skip \
     --ignore-missing-imports \
-    src/python/rfx/observation.py \
-    src/python/rfx/utils/padding.py \
-    src/python/rfx/utils/transforms.py
+    rfx/python/rfx/observation.py \
+    rfx/python/rfx/utils/padding.py \
+    rfx/python/rfx/utils/transforms.py
 }
 
 run_typecheck_full() {
   local python_bin="$1"
   require_python_module "$python_bin" mypy
 
-  "$python_bin" -m mypy src/python/rfx/ --ignore-missing-imports
+  "$python_bin" -m mypy rfx/python/rfx/ --ignore-missing-imports
 }
 
 run_test() {
   local python_bin="$1"
   require_python_module "$python_bin" pytest
 
-  PYTHONPATH="$ROOT/src/python:${PYTHONPATH:-}" "$python_bin" -m pytest src/tests/ -q
+  PYTHONPATH="$ROOT/rfx/python:${PYTHONPATH:-}" "$python_bin" -m pytest rfx/tests/ -q
 }
 
 run_build() {

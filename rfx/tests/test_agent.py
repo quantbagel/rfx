@@ -61,6 +61,7 @@ class TestAgent:
 
     def test_agent_init_with_skill_objects(self) -> None:
         """Test agent initialization with Skill objects."""
+
         @skill
         def test_skill() -> None:
             """Test skill."""
@@ -200,7 +201,9 @@ class TestMockAgent:
 
         assert result == "Walked 5.0m"
 
-    def test_mock_agent_execute_skill_default_args(self, sample_skill_func: Callable[..., str]) -> None:
+    def test_mock_agent_execute_skill_default_args(
+        self, sample_skill_func: Callable[..., str]
+    ) -> None:
         """Test executing skills with default arguments."""
         agent = MockAgent(skills=[sample_skill_func])
 

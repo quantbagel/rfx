@@ -7,15 +7,18 @@ from typing import Any, Callable
 @pytest.fixture
 def sample_skill_func() -> Callable[..., str]:
     """A sample function to use as a skill."""
+
     def walk_forward(distance: float = 1.0) -> str:
         """Walk forward by the specified distance in meters."""
         return f"Walked {distance}m"
+
     return walk_forward
 
 
 @pytest.fixture
 def sample_skill_with_types() -> Callable[..., dict]:
     """A sample function with full type annotations."""
+
     def move_robot(
         x: float,
         y: float,
@@ -35,6 +38,7 @@ def sample_skill_with_types() -> Callable[..., dict]:
             Movement result dictionary
         """
         return {"x": x, "y": y, "speed": speed, "blocking": blocking}
+
     return move_robot
 
 

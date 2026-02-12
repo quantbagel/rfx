@@ -23,6 +23,7 @@ from rfx.nn import Policy, MLP, go2_mlp
 try:
     from tinygrad import Tensor
     from tinygrad.nn import Linear
+
     TINYGRAD_AVAILABLE = True
 except ImportError:
     TINYGRAD_AVAILABLE = False
@@ -190,7 +191,7 @@ def experiment_4_attention():
             v = self.v_proj(x)
 
             # Attention scores: (batch, 12, 12)
-            scale = self.hidden_dim ** 0.5
+            scale = self.hidden_dim**0.5
             scores = (q @ k.transpose(-2, -1)) / scale
             attn = scores.softmax(axis=-1)
 

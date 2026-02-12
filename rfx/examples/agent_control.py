@@ -60,6 +60,7 @@ def turn_left(angle: float = 90.0):
         return "Robot not connected"
 
     import math
+
     rad = math.radians(angle)
     angular_speed = 0.5  # rad/s
     duration = rad / angular_speed
@@ -78,6 +79,7 @@ def turn_right(angle: float = 90.0):
         return "Robot not connected"
 
     import math
+
     rad = math.radians(angle)
     angular_speed = 0.5  # rad/s
     duration = rad / angular_speed
@@ -172,6 +174,7 @@ def main():
         if demo_mode:
             # Use mock agent for testing
             from rfx.agent import MockAgent
+
             agent = MockAgent(skills=skills)
 
             print("\nAvailable skills:")

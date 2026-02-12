@@ -1,9 +1,9 @@
 $schema: "https://moonrepo.dev/schemas/workspace.json"
 
 projects:
-  rfx_core: "src/crates/rfx-core"
-  rfx_python: "src/crates/rfx-python"
-  rfx_py: "src/python"
+  rfx_core: "rfx/crates/rfx-core"
+  rfx_python: "rfx/crates/rfx-python"
+  rfx_py: "rfx/python"
 
 vcs:
   manager: "git"

@@ -43,8 +43,7 @@ def main():
         # Simple proportional controller
         kp = 0.5
         actions = [
-            kp * (target - current)
-            for target, current in zip(target_positions, current_positions)
+            kp * (target - current) for target, current in zip(target_positions, current_positions)
         ]
 
         # Step simulation
@@ -52,8 +51,10 @@ def main():
 
         # Print every 100 steps
         if step % 100 == 0:
-            print(f"Step {step:4d} | Time: {state.sim_time():.3f}s | "
-                  f"Joint[0]: {current_positions[0]:.4f} rad")
+            print(
+                f"Step {step:4d} | Time: {state.sim_time():.3f}s | "
+                f"Joint[0]: {current_positions[0]:.4f} rad"
+            )
 
         if done:
             print("Episode terminated!")

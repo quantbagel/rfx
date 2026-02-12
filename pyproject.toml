@@ -59,9 +59,9 @@ Issues = "https://github.com/quantbagel/rfx/issues"
 
 [tool.maturin]
 # Build the rfx-python crate
-manifest-path = "src/crates/rfx-python/Cargo.toml"
+manifest-path = "rfx/crates/rfx-python/Cargo.toml"
 # Include Python source files
-python-source = "src/python"
+python-source = "rfx/python"
 # Module name
 module-name = "rfx._rfx"
 # Features
@@ -99,4 +99,4 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["src/tests"]
+testpaths = ["rfx/tests"]

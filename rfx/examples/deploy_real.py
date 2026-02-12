@@ -21,8 +21,15 @@ from rfx.sim import MockRobot
 class SimpleVLA(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 256):
         super().__init__()
-        self.encoder = nn.Sequential(nn.Linear(state_dim, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, hidden_dim), nn.ReLU())
-        self.policy = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, action_dim))
+        self.encoder = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.policy = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, action_dim)
+        )
 
     def forward(self, obs: dict) -> torch.Tensor:
         return self.policy(self.encoder(obs["state"]))
@@ -32,7 +39,9 @@ def deploy(args):
     if args.mock:
         robot = MockRobot(state_dim=12, action_dim=6, num_envs=1)
     else:
-        robot = RealRobot.from_config(Path(__file__).parent.parent / "configs" / "so101.yaml", port=args.port)
+        robot = RealRobot.from_config(
+            Path(__file__).parent.parent / "configs" / "so101.yaml", port=args.port
+        )
 
     policy = SimpleVLA(robot.max_state_dim, robot.max_action_dim)
     if Path(args.checkpoint).exists():

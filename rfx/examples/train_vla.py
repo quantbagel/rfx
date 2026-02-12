@@ -73,7 +73,9 @@ def train(args):
         obs = new_obs
 
         if step % args.log_interval == 0:
-            print(f"Step {step:6d} | Loss: {loss.item():8.4f} | Reward: {reward.mean().item():8.4f}")
+            print(
+                f"Step {step:6d} | Loss: {loss.item():8.4f} | Reward: {reward.mean().item():8.4f}"
+            )
 
     print("Done!")
 

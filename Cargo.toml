@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "src/crates/rfx-core",
-    "src/crates/rfx-python",
+    "rfx/crates/rfx-core",
+    "rfx/crates/rfx-python",
 ]
 
 [workspace.package]

@@ -32,7 +32,9 @@ def main():
 
         # Get initial state
         state = go2.state()
-        print(f"Initial state: IMU roll={state.imu.roll_deg:.1f}°, pitch={state.imu.pitch_deg:.1f}°")
+        print(
+            f"Initial state: IMU roll={state.imu.roll_deg:.1f}°, pitch={state.imu.pitch_deg:.1f}°"
+        )
 
         # Walk forward
         print("Walking forward...")
