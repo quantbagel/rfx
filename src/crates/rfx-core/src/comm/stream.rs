@@ -286,7 +286,9 @@ where
         std::thread::spawn(move || {
             while active_clone.load(Ordering::Relaxed) {
                 match f() {
-                    Some(v) => { let _ = tx.try_send(v); }
+                    Some(v) => {
+                        let _ = tx.try_send(v);
+                    }
                     None => break,
                 }
             }
@@ -295,7 +297,9 @@ where
         std::thread::spawn(move || {
             while active_clone.load(Ordering::Relaxed) {
                 match f() {
-                    Some(v) => { let _ = tx.send(v); }
+                    Some(v) => {
+                        let _ = tx.send(v);
+                    }
                     None => break,
                 }
             }

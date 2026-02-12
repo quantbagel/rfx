@@ -159,7 +159,7 @@ mod tests {
         ctx.update_u8(0x42);
         ctx.update_u16(0x1234);
         ctx.update_u32(0xDEADBEEF);
-        ctx.update_f32(3.14159);
+        ctx.update_f32(std::f32::consts::PI);
         let crc = ctx.finalize();
 
         // Verify deterministic
@@ -167,7 +167,7 @@ mod tests {
         ctx2.update_u8(0x42);
         ctx2.update_u16(0x1234);
         ctx2.update_u32(0xDEADBEEF);
-        ctx2.update_f32(3.14159);
+        ctx2.update_f32(std::f32::consts::PI);
         assert_eq!(crc, ctx2.finalize());
     }
 

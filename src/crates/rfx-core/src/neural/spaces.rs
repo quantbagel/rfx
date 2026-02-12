@@ -42,17 +42,11 @@ pub enum SpaceType {
         shape: ArrayVec<usize, 4>,
     },
     /// Discrete integer values
-    Discrete {
-        n: usize,
-    },
+    Discrete { n: usize },
     /// Multiple discrete values
-    MultiDiscrete {
-        nvec: Vec<usize>,
-    },
+    MultiDiscrete { nvec: Vec<usize> },
     /// Binary values
-    MultiBinary {
-        n: usize,
-    },
+    MultiBinary { n: usize },
 }
 
 impl SpaceType {
@@ -91,11 +85,17 @@ impl Space {
     pub fn box_space(name: impl Into<String>, shape: Vec<usize>, low: f32, high: f32) -> Self {
         let size: usize = shape.iter().product();
         let mut low_av = ArrayVec::new();
-        for _ in 0..size { low_av.push(low); }
+        for _ in 0..size {
+            low_av.push(low);
+        }
         let mut high_av = ArrayVec::new();
-        for _ in 0..size { high_av.push(high); }
+        for _ in 0..size {
+            high_av.push(high);
+        }
         let mut shape_av = ArrayVec::new();
-        for &s in &shape { shape_av.push(s); }
+        for &s in &shape {
+            shape_av.push(s);
+        }
         Self {
             name: name.into(),
             space_type: SpaceType::Box {
@@ -182,8 +182,9 @@ impl ObservationSpace {
 
     /// Standard Go2 observation space (48-dim)
     pub fn go2_standard() -> Self {
+        let pi = std::f32::consts::PI;
         Self::new(vec![
-            Space::box_space("joint_pos", vec![12], -3.14, 3.14),
+            Space::box_space("joint_pos", vec![12], -pi, pi),
             Space::box_space("joint_vel", vec![12], -20.0, 20.0),
             Space::box_space("base_ang_vel", vec![3], -10.0, 10.0),
             Space::box_space("projected_gravity", vec![3], -1.0, 1.0),

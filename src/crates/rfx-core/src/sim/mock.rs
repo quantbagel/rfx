@@ -77,7 +77,7 @@ impl MockSimBackend {
                 *pos += *vel * dt_f32;
 
                 // Clamp to reasonable range
-                *pos = pos.clamp(-3.14, 3.14);
+                *pos = pos.clamp(-std::f32::consts::PI, std::f32::consts::PI);
                 *vel = vel.clamp(-20.0, 20.0);
             });
     }

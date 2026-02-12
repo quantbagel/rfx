@@ -19,8 +19,8 @@ use parking_lot::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use super::backend::DdsBackend;
 use super::super::{Go2Config, LowCmd, LowState, SportModeCmd};
+use super::backend::DdsBackend;
 use crate::comm::{bounded_channel, Receiver, Sender};
 use crate::{Error, Result};
 

@@ -91,7 +91,9 @@ where
         packet.push(id);
         packet.push(length);
         packet.push(instruction as u8);
-        packet.try_extend_from_slice(params).expect("packet params exceed 256 bytes");
+        packet
+            .try_extend_from_slice(params)
+            .expect("packet params exceed 256 bytes");
         packet.push(Self::checksum(id, length, instruction as u8, params));
         packet
     }
@@ -209,7 +211,12 @@ where
     }
 
     /// Read a register value
-    pub fn read_register(&mut self, id: u8, address: u8, length: u8) -> Result<ArrayVec<u8, 16>, Error> {
+    pub fn read_register(
+        &mut self,
+        id: u8,
+        address: u8,
+        length: u8,
+    ) -> Result<ArrayVec<u8, 16>, Error> {
         let packet = Self::build_packet(id, Instruction::Read, &[address, length]);
         let resp_len = self.send_packet(&packet)?;
 
@@ -225,7 +232,8 @@ where
 
         // Return data without error byte and checksum
         let mut result = ArrayVec::<u8, 16>::new();
-        result.try_extend_from_slice(&self.rx_buffer[1..resp_len - 1])
+        result
+            .try_extend_from_slice(&self.rx_buffer[1..resp_len - 1])
             .expect("register data exceeds 16 bytes");
         Ok(result)
     }
@@ -234,7 +242,9 @@ where
     pub fn write_register(&mut self, id: u8, address: u8, data: &[u8]) -> Result<(), Error> {
         let mut params = ArrayVec::<u8, 16>::new();
         params.push(address);
-        params.try_extend_from_slice(data).expect("register data exceeds 16 bytes");
+        params
+            .try_extend_from_slice(data)
+            .expect("register data exceeds 16 bytes");
 
         let packet = Self::build_packet(id, Instruction::Write, &params);
         let resp_len = self.send_packet(&packet)?;
@@ -265,7 +275,9 @@ where
         let mut params = ArrayVec::<u8, 16>::new();
         params.push(registers::PRESENT_POSITION);
         params.push(2);
-        params.try_extend_from_slice(ids).expect("too many servo IDs");
+        params
+            .try_extend_from_slice(ids)
+            .expect("too many servo IDs");
 
         let packet = Self::build_packet(BROADCAST_ID, Instruction::SyncRead, &params);
 

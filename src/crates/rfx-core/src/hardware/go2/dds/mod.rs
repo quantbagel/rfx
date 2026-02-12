@@ -30,7 +30,7 @@ pub mod dust;
 #[cfg(feature = "dds-cyclone")]
 pub mod cyclone;
 
-pub use backend::{DdsBackend, DdsQos, topics};
+pub use backend::{topics, DdsBackend, DdsQos};
 pub use crc::compute_crc;
 pub use messages::{
     BmsStateDds, ImuStateDds, LowCmdDds, LowStateDds, MotorCmdDds, MotorStateDds,

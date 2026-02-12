@@ -135,10 +135,24 @@ impl Quaternion {
     #[inline]
     pub fn multiply(&self, other: &Quaternion) -> Quaternion {
         Self {
-            w: self.w.mul_add(other.w, (-self.x).mul_add(other.x, (-self.y).mul_add(other.y, -self.z * other.z))),
-            x: self.w.mul_add(other.x, self.x.mul_add(other.w, self.y.mul_add(other.z, -self.z * other.y))),
-            y: self.w.mul_add(other.y, (-self.x).mul_add(other.z, self.y.mul_add(other.w, self.z * other.x))),
-            z: self.w.mul_add(other.z, self.x.mul_add(other.y, (-self.y).mul_add(other.x, self.z * other.w))),
+            w: self.w.mul_add(
+                other.w,
+                (-self.x).mul_add(other.x, (-self.y).mul_add(other.y, -self.z * other.z)),
+            ),
+            x: self.w.mul_add(
+                other.x,
+                self.x
+                    .mul_add(other.w, self.y.mul_add(other.z, -self.z * other.y)),
+            ),
+            y: self.w.mul_add(
+                other.y,
+                (-self.x).mul_add(other.z, self.y.mul_add(other.w, self.z * other.x)),
+            ),
+            z: self.w.mul_add(
+                other.z,
+                self.x
+                    .mul_add(other.y, (-self.y).mul_add(other.x, self.z * other.w)),
+            ),
         }
     }
 
@@ -199,7 +213,11 @@ impl Quaternion {
     /// Normalize the quaternion to unit length
     #[inline]
     fn normalize(&mut self) {
-        let norm_sq = self.w.mul_add(self.w, self.x.mul_add(self.x, self.y.mul_add(self.y, self.z * self.z)));
+        let norm_sq = self.w.mul_add(
+            self.w,
+            self.x
+                .mul_add(self.x, self.y.mul_add(self.y, self.z * self.z)),
+        );
         if norm_sq > 1e-20 {
             let inv_norm = 1.0 / norm_sq.sqrt();
             self.w *= inv_norm;
@@ -212,13 +230,21 @@ impl Quaternion {
     /// Squared magnitude
     #[inline]
     pub fn norm_squared(&self) -> f64 {
-        self.w.mul_add(self.w, self.x.mul_add(self.x, self.y.mul_add(self.y, self.z * self.z)))
+        self.w.mul_add(
+            self.w,
+            self.x
+                .mul_add(self.x, self.y.mul_add(self.y, self.z * self.z)),
+        )
     }
 
     /// Dot product between two quaternions
     #[inline]
     pub fn dot(&self, other: &Quaternion) -> f64 {
-        self.w.mul_add(other.w, self.x.mul_add(other.x, self.y.mul_add(other.y, self.z * other.z)))
+        self.w.mul_add(
+            other.w,
+            self.x
+                .mul_add(other.x, self.y.mul_add(other.y, self.z * other.z)),
+        )
     }
 
     /// Angular distance between two quaternions in radians

@@ -51,7 +51,11 @@ impl Transition {
 
     /// Create a transition triggered by an event
     #[must_use]
-    pub fn on_event(from: impl Into<String>, event: impl Into<String>, to: impl Into<String>) -> Self {
+    pub fn on_event(
+        from: impl Into<String>,
+        event: impl Into<String>,
+        to: impl Into<String>,
+    ) -> Self {
         Self {
             from: from.into(),
             to: to.into(),
@@ -279,7 +283,11 @@ impl<S: Clone + Eq + Hash, C> EnumStateMachine<S, C> {
 
     /// Add a state handler
     #[must_use]
-    pub fn add_state<F: Fn(&mut C, f64) + Send + Sync + 'static>(mut self, state: S, handler: F) -> Self {
+    pub fn add_state<F: Fn(&mut C, f64) + Send + Sync + 'static>(
+        mut self,
+        state: S,
+        handler: F,
+    ) -> Self {
         let idx = self.handlers.len();
         self.handlers.push(Box::new(handler));
         let is_current = state == self.current;
@@ -363,12 +371,12 @@ mod tests {
     fn test_state_machine_event() {
         let mut sm: StateMachine<TestContext, TestEvent> = StateMachine::new("idle");
 
-        sm.add_state(FnState::<TestContext, TestEvent>::new("idle").with_event(|_ctx: &mut TestContext, event: &TestEvent| {
-            match event {
+        sm.add_state(FnState::<TestContext, TestEvent>::new("idle").with_event(
+            |_ctx: &mut TestContext, event: &TestEvent| match event {
                 TestEvent::Start => Some("running".into()),
                 _ => None,
-            }
-        }));
+            },
+        ));
 
         sm.add_state(FnState::<TestContext, TestEvent>::new("running"));
 

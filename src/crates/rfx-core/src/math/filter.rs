@@ -375,7 +375,7 @@ mod tests {
 
     #[test]
     fn test_moving_average() {
-        let mut ma = MovingAverageFilter::new(3);
+        let mut ma = MovingAverageFilter::<64>::new(3);
         assert_relative_eq!(ma.update(1.0), 1.0);
         assert_relative_eq!(ma.update(2.0), 1.5);
         assert_relative_eq!(ma.update(3.0), 2.0);

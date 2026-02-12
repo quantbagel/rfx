@@ -107,18 +107,8 @@ pub mod joint_limits {
 
 /// Motor names for the Go2
 pub const MOTOR_NAMES: [&str; 12] = [
-    "FR_hip",
-    "FR_thigh",
-    "FR_calf",
-    "FL_hip",
-    "FL_thigh",
-    "FL_calf",
-    "RR_hip",
-    "RR_thigh",
-    "RR_calf",
-    "RL_hip",
-    "RL_thigh",
-    "RL_calf",
+    "FR_hip", "FR_thigh", "FR_calf", "FL_hip", "FL_thigh", "FL_calf", "RR_hip", "RR_thigh",
+    "RR_calf", "RL_hip", "RL_thigh", "RL_calf",
 ];
 
 /// Get motor index by name

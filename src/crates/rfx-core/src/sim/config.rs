@@ -24,8 +24,8 @@ pub struct PhysicsConfig {
 impl Default for PhysicsConfig {
     fn default() -> Self {
         Self {
-            dt: 0.002,        // 500 Hz
-            substeps: 4,      // Effective 2000 Hz physics
+            dt: 0.002,   // 500 Hz
+            substeps: 4, // Effective 2000 Hz physics
             gravity: [0.0, 0.0, -9.81],
             enable_contacts: true,
             contact_stiffness: 1e4,

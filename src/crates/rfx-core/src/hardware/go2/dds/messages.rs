@@ -20,9 +20,8 @@ pub const DDS_NUM_MOTORS: usize = 20;
 ///   + motors(20 * (1 + 4*5 + 4*3) = 20 * 33 = 660)
 ///   + bms_cmd(1 + 3) + wireless_remote(40) + led(12) + fan(2) + gpio(1) + reserve(4)
 ///   = 745
-const CRC_BUF_SIZE: usize = 2 + 1 + 1 + 8 + 8 + 2
-    + DDS_NUM_MOTORS * (1 + 4 * 5 + 4 * 3)
-    + 4 + 40 + 12 + 2 + 1 + 4;
+const CRC_BUF_SIZE: usize =
+    2 + 1 + 1 + 8 + 8 + 2 + DDS_NUM_MOTORS * (1 + 4 * 5 + 4 * 3) + 4 + 40 + 12 + 2 + 1 + 4;
 
 /// IMU state in DDS wire format
 #[derive(Debug, Clone, Copy, Default)]
@@ -209,9 +208,8 @@ impl Default for LowStateDds {
 
 impl LowStateDds {
     pub fn to_low_state(&self) -> LowState {
-        let motor_state: [MotorState; NUM_MOTORS] = std::array::from_fn(|i| {
-            MotorState::from(self.motor_state[i])
-        });
+        let motor_state: [MotorState; NUM_MOTORS] =
+            std::array::from_fn(|i| MotorState::from(self.motor_state[i]));
 
         LowState {
             tick: self.tick,
@@ -379,7 +377,10 @@ impl SportModeRequestDds {
         let param = format!(r#"{{"x":{},"y":{},"z":{}}}"#, vx, vy, vyaw);
         Self {
             header: RequestHeaderDds {
-                identity: IdentityDds { id: 0, api_id: 1008 },
+                identity: IdentityDds {
+                    id: 0,
+                    api_id: 1008,
+                },
                 api_id: 1008,
             },
             parameter: param,
@@ -389,7 +390,10 @@ impl SportModeRequestDds {
     pub fn stand() -> Self {
         Self {
             header: RequestHeaderDds {
-                identity: IdentityDds { id: 0, api_id: 1004 },
+                identity: IdentityDds {
+                    id: 0,
+                    api_id: 1004,
+                },
                 api_id: 1004,
             },
             parameter: String::new(),
@@ -399,7 +403,10 @@ impl SportModeRequestDds {
     pub fn stop() -> Self {
         Self {
             header: RequestHeaderDds {
-                identity: IdentityDds { id: 0, api_id: 1002 },
+                identity: IdentityDds {
+                    id: 0,
+                    api_id: 1002,
+                },
                 api_id: 1002,
             },
             parameter: String::new(),
@@ -409,7 +416,10 @@ impl SportModeRequestDds {
     pub fn sit() -> Self {
         Self {
             header: RequestHeaderDds {
-                identity: IdentityDds { id: 0, api_id: 1003 },
+                identity: IdentityDds {
+                    id: 0,
+                    api_id: 1003,
+                },
                 api_id: 1003,
             },
             parameter: String::new(),
@@ -419,7 +429,10 @@ impl SportModeRequestDds {
     pub fn damp() -> Self {
         Self {
             header: RequestHeaderDds {
-                identity: IdentityDds { id: 0, api_id: 1001 },
+                identity: IdentityDds {
+                    id: 0,
+                    api_id: 1001,
+                },
                 api_id: 1001,
             },
             parameter: String::new(),
@@ -458,8 +471,10 @@ mod tests {
         assert_eq!(cmd.head, [0xFE, 0xEF]);
         assert_eq!(cmd.level_flag, 0xFF);
         // motor_cmd is now a fixed-size array [MotorCmdDds; DDS_NUM_MOTORS]
-        assert_eq!(std::mem::size_of_val(&cmd.motor_cmd),
-                   std::mem::size_of::<MotorCmdDds>() * DDS_NUM_MOTORS);
+        assert_eq!(
+            std::mem::size_of_val(&cmd.motor_cmd),
+            std::mem::size_of::<MotorCmdDds>() * DDS_NUM_MOTORS
+        );
     }
 
     #[test]

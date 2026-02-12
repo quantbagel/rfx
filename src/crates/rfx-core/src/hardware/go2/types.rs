@@ -158,8 +158,9 @@ fn serialize_bytes_40<S: serde::Serializer>(bytes: &[u8; 40], s: S) -> Result<S:
 
 fn deserialize_bytes_40<'de, D: serde::Deserializer<'de>>(d: D) -> Result<[u8; 40], D::Error> {
     let v: Vec<u8> = serde::Deserialize::deserialize(d)?;
-    v.try_into()
-        .map_err(|v: Vec<u8>| serde::de::Error::custom(format!("expected 40 bytes, got {}", v.len())))
+    v.try_into().map_err(|v: Vec<u8>| {
+        serde::de::Error::custom(format!("expected 40 bytes, got {}", v.len()))
+    })
 }
 
 impl Default for LowState {

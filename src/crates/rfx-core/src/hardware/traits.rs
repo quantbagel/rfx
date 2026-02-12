@@ -83,7 +83,8 @@ impl Command {
     /// Create a position command
     pub fn position(positions: &[f64]) -> Self {
         let mut av = ArrayVec::new();
-        av.try_extend_from_slice(positions).expect("too many joints");
+        av.try_extend_from_slice(positions)
+            .expect("too many joints");
         Self {
             positions: Some(av),
             ..Default::default()
@@ -93,7 +94,9 @@ impl Command {
     /// Create a position command with gains
     pub fn position_with_gains(positions: &[f64], kp: &[f64], kd: &[f64]) -> Self {
         let mut pos_av = ArrayVec::new();
-        pos_av.try_extend_from_slice(positions).expect("too many joints");
+        pos_av
+            .try_extend_from_slice(positions)
+            .expect("too many joints");
         let mut kp_av = ArrayVec::new();
         kp_av.try_extend_from_slice(kp).expect("too many joints");
         let mut kd_av = ArrayVec::new();
@@ -109,7 +112,8 @@ impl Command {
     /// Create a velocity command
     pub fn velocity(velocities: &[f64]) -> Self {
         let mut av = ArrayVec::new();
-        av.try_extend_from_slice(velocities).expect("too many joints");
+        av.try_extend_from_slice(velocities)
+            .expect("too many joints");
         Self {
             velocities: Some(av),
             ..Default::default()

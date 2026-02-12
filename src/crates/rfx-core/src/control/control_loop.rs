@@ -131,7 +131,8 @@ impl ControlLoopStats {
     /// This is the simplest measure of timing variability but is sensitive
     /// to outliers. For a more robust measure, use [`jitter_std_dev`].
     pub fn timing_range(&self) -> Duration {
-        self.max_iteration_time.saturating_sub(self.min_iteration_time)
+        self.max_iteration_time
+            .saturating_sub(self.min_iteration_time)
     }
 
     /// Get timing jitter as standard deviation (in seconds)
@@ -200,7 +201,9 @@ impl ControlLoopHandle {
     pub fn join(mut self) -> Result<()> {
         self.stop();
         if let Some(handle) = self.thread.take() {
-            handle.join().map_err(|_| Error::ControlLoop("Thread panicked".into()))??;
+            handle
+                .join()
+                .map_err(|_| Error::ControlLoop("Thread panicked".into()))??;
         }
         Ok(())
     }
@@ -407,5 +410,4 @@ mod tests {
             stats.iterations
         );
     }
-
 }

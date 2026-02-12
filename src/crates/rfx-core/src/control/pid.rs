@@ -287,17 +287,24 @@ impl Pid {
 
         // Integral term with windup protection (FMA)
         self.state.integral = error.mul_add(dt, self.state.integral);
-        self.state.integral = self.state.integral.clamp(-self.config.integral_limit, self.config.integral_limit);
+        self.state.integral = self
+            .state
+            .integral
+            .clamp(-self.config.integral_limit, self.config.integral_limit);
         let i_term = self.config.ki * self.state.integral;
 
         // Derivative term with filtering (1 FMA + 1 sub)
         let raw_derivative = (error - self.state.prev_error) / dt;
         let alpha = self.derivative_alpha;
-        self.state.derivative_filtered = alpha.mul_add(raw_derivative - self.state.derivative_filtered, self.state.derivative_filtered);
+        self.state.derivative_filtered = alpha.mul_add(
+            raw_derivative - self.state.derivative_filtered,
+            self.state.derivative_filtered,
+        );
         let d_term = self.config.kd * self.state.derivative_filtered;
 
         // Calculate output
-        let output = (p_term + i_term + d_term).clamp(self.config.output_min, self.config.output_max);
+        let output =
+            (p_term + i_term + d_term).clamp(self.config.output_min, self.config.output_max);
 
         // Update state for next iteration
         self.state.prev_error = error;
@@ -410,5 +417,4 @@ mod tests {
         assert_relative_eq!(pid.state().integral, 0.0);
         assert_relative_eq!(pid.state().prev_error, 0.0);
     }
-
 }

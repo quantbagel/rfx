@@ -4,8 +4,8 @@
 //! The GIL is released immediately in all long-running operations to allow
 //! Python threads to run concurrently.
 
-use pyo3::prelude::*;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::prelude::*;
 
 mod bindings;
 
@@ -109,8 +109,8 @@ fn run_control_loop(
     name: Option<&str>,
     max_iterations: Option<u64>,
 ) -> PyResult<PyControlLoopStats> {
-    let config = rfx_core::control::ControlLoopConfig::new(rate_hz)
-        .with_name(name.unwrap_or("python_loop"));
+    let config =
+        rfx_core::control::ControlLoopConfig::new(rate_hz).with_name(name.unwrap_or("python_loop"));
 
     // Clone the callback with GIL before releasing it
     let callback_clone = callback.clone_ref(py);
@@ -126,13 +126,11 @@ fn run_control_loop(
             }
 
             // Acquire GIL only when calling Python callback
-            Python::with_gil(|py| {
-                match callback_clone.call1(py, (iter, dt)) {
-                    Ok(result) => result.is_truthy(py).unwrap_or(false),
-                    Err(e) => {
-                        e.print(py);
-                        false
-                    }
+            Python::with_gil(|py| match callback_clone.call1(py, (iter, dt)) {
+                Ok(result) => result.is_truthy(py).unwrap_or(false),
+                Err(e) => {
+                    e.print(py);
+                    false
                 }
             })
         })

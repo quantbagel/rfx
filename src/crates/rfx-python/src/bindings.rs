@@ -2,8 +2,8 @@
 //!
 //! Wrapper types that expose rfx-core functionality to Python.
 
-use pyo3::prelude::*;
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
+use pyo3::prelude::*;
 use std::sync::Arc;
 
 // ============================================================================
@@ -329,7 +329,11 @@ impl PyLowPassFilter {
 
     fn __repr__(&self) -> String {
         use rfx_core::math::Filter;
-        format!("LowPassFilter(alpha={:.4}, value={:.4})", self.inner.alpha(), self.inner.value())
+        format!(
+            "LowPassFilter(alpha={:.4}, value={:.4})",
+            self.inner.alpha(),
+            self.inner.value()
+        )
     }
 }
 
@@ -366,11 +370,15 @@ impl PyTopic {
     /// Get topic name
     #[getter]
     fn name(&self) -> String {
-        self.inner.name()
+        self.inner.name().to_string()
     }
 
     fn __repr__(&self) -> String {
-        format!("Topic(name='{}', subscribers={})", self.inner.name(), self.inner.subscriber_count())
+        format!(
+            "Topic(name='{}', subscribers={})",
+            self.inner.name(),
+            self.inner.subscriber_count()
+        )
     }
 }
 
@@ -558,7 +566,9 @@ impl PyControlLoopHandle {
 
     /// Get current statistics
     fn stats(&self) -> Option<PyControlLoopStats> {
-        self.inner.as_ref().map(|h| PyControlLoopStats::from(h.stats()))
+        self.inner
+            .as_ref()
+            .map(|h| PyControlLoopStats::from(h.stats()))
     }
 
     fn __repr__(&self) -> String {
@@ -881,8 +891,7 @@ impl PyGo2State {
     fn __repr__(&self) -> String {
         format!(
             "Go2State(tick={}, imu={:?})",
-            self.inner.tick,
-            self.inner.imu.rpy
+            self.inner.tick, self.inner.imu.rpy
         )
     }
 }
@@ -1029,12 +1038,12 @@ impl PySo101 {
 
     /// Read current positions (direct read)
     fn read_positions(&self, py: Python<'_>) -> Vec<f32> {
-        py.allow_threads(|| self.inner.lock().read_positions())
+        py.allow_threads(|| self.inner.lock().read_positions().to_vec())
     }
 
     /// Set target positions for all joints
     fn set_positions(&self, py: Python<'_>, positions: Vec<f32>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.lock().set_positions(positions))
+        py.allow_threads(|| self.inner.lock().set_positions(&positions))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1066,7 +1075,11 @@ impl PyGo2 {
     /// Connect to a Go2 robot
     #[staticmethod]
     #[pyo3(signature = (config = None, ip_address = None))]
-    fn connect(py: Python<'_>, config: Option<PyGo2Config>, ip_address: Option<&str>) -> PyResult<Self> {
+    fn connect(
+        py: Python<'_>,
+        config: Option<PyGo2Config>,
+        ip_address: Option<&str>,
+    ) -> PyResult<Self> {
         let cfg = match (config, ip_address) {
             (Some(c), _) => c.inner,
             (None, Some(ip)) => rfx_core::hardware::go2::Go2Config::new(ip),
@@ -1468,7 +1481,11 @@ impl PySender {
     }
 
     fn __repr__(&self) -> String {
-        format!("Sender(len={}, capacity={:?})", self.inner.len(), self.inner.capacity())
+        format!(
+            "Sender(len={}, capacity={:?})",
+            self.inner.len(),
+            self.inner.capacity()
+        )
     }
 }
 

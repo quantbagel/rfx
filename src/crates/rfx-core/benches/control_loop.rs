@@ -68,9 +68,7 @@ fn bench_pid_sequence(c: &mut Criterion) {
 fn bench_quaternion(c: &mut Criterion) {
     let mut group = c.benchmark_group("Quaternion");
 
-    group.bench_function("identity", |b| {
-        b.iter(|| black_box(Quaternion::identity()))
-    });
+    group.bench_function("identity", |b| b.iter(|| black_box(Quaternion::identity())));
 
     group.bench_function("from_euler", |b| {
         b.iter(|| black_box(Quaternion::from_euler(0.1, 0.2, 0.3)))
@@ -124,9 +122,7 @@ fn bench_quaternion(c: &mut Criterion) {
 fn bench_transform(c: &mut Criterion) {
     let mut group = c.benchmark_group("Transform");
 
-    group.bench_function("identity", |b| {
-        b.iter(|| black_box(Transform::identity()))
-    });
+    group.bench_function("identity", |b| b.iter(|| black_box(Transform::identity())));
 
     group.bench_function("compose", |b| {
         let t1 = Transform::new([1.0, 2.0, 3.0], Quaternion::from_euler(0.1, 0.2, 0.3));
@@ -166,17 +162,14 @@ fn bench_filters(c: &mut Criterion) {
 
     // Moving average — ring buffer, various window sizes
     for window in [4, 16, 64] {
-        group.bench_function(
-            &format!("moving_avg_w{window}_update"),
-            |b| {
-                let mut f = MovingAverageFilter::<64>::new(window);
-                let mut i = 0.0_f64;
-                b.iter(|| {
-                    i += 0.01;
-                    black_box(f.update(i.sin()))
-                })
-            },
-        );
+        group.bench_function(&format!("moving_avg_w{window}_update"), |b| {
+            let mut f = MovingAverageFilter::<64>::new(window);
+            let mut i = 0.0_f64;
+            b.iter(|| {
+                i += 0.01;
+                black_box(f.update(i.sin()))
+            })
+        });
     }
 
     // Low-pass filter burst (simulate 500Hz control loop, 1 second)
@@ -300,8 +293,9 @@ fn bench_full_control_tick(c: &mut Criterion) {
         let gravity_world = [0.0, 0.0, -9.81];
         let mut pids = [Pid::pid(20.0, 0.1, 0.5); 12];
         let setpoints = [0.0_f64; 12];
-        let measurements = [0.01, -0.02, 0.03, -0.01, 0.02, -0.03,
-                            0.01, -0.02, 0.03, -0.01, 0.02, -0.03];
+        let measurements = [
+            0.01, -0.02, 0.03, -0.01, 0.02, -0.03, 0.01, -0.02, 0.03, -0.01, 0.02, -0.03,
+        ];
         let dt = 0.002;
 
         b.iter(|| {
@@ -309,9 +303,8 @@ fn bench_full_control_tick(c: &mut Criterion) {
             let _gravity_body = orientation.rotate_vector(gravity_world);
 
             // 2. Run PID on all 12 joints
-            let torques: [f64; 12] = std::array::from_fn(|i| {
-                pids[i].update(setpoints[i], measurements[i], dt)
-            });
+            let torques: [f64; 12] =
+                std::array::from_fn(|i| pids[i].update(setpoints[i], measurements[i], dt));
             black_box(torques)
         })
     });

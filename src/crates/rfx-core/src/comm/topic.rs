@@ -67,7 +67,8 @@ impl<T: Clone + Send + 'static> TopicInner<T> {
         if self.config.latch {
             self.latched_value = Some(message.clone());
         }
-        self.subscribers.retain(|tx| tx.try_send(message.clone()).is_ok());
+        self.subscribers
+            .retain(|tx| tx.try_send(message.clone()).is_ok());
     }
 }
 

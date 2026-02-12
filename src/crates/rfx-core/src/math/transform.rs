@@ -330,7 +330,11 @@ mod tests {
         assert_relative_eq!(t.position[0], t2.position[0], epsilon = 1e-10);
         assert_relative_eq!(t.position[1], t2.position[1], epsilon = 1e-10);
         assert_relative_eq!(t.position[2], t2.position[2], epsilon = 1e-10);
-        assert_relative_eq!(t.orientation.dot(&t2.orientation).abs(), 1.0, epsilon = 1e-10);
+        assert_relative_eq!(
+            t.orientation.dot(&t2.orientation).abs(),
+            1.0,
+            epsilon = 1e-10
+        );
     }
 
     #[test]

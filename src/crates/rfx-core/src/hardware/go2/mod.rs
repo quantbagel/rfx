@@ -41,8 +41,8 @@ mod types;
 
 pub use dds::{DdsBackend, DustDdsBackend};
 pub use types::{
-    BmsState, Go2State, ImuState, LowCmd, LowState, MotorCmd, MotorState, RobotMode,
-    SportModeCmd, SportModeState,
+    BmsState, Go2State, ImuState, LowCmd, LowState, MotorCmd, MotorState, RobotMode, SportModeCmd,
+    SportModeState,
 };
 
 #[cfg(feature = "dds-cyclone")]
@@ -387,9 +387,7 @@ impl Go2 {
     /// Requires EDU mode to be enabled.
     pub fn send_low_cmd(&self, cmd: LowCmd) -> Result<()> {
         if !self.config.edu_mode {
-            return Err(Error::Config(
-                "Low-level commands require EDU mode".into(),
-            ));
+            return Err(Error::Config("Low-level commands require EDU mode".into()));
         }
         if !self.is_connected() {
             return Err(Error::Connection("Not connected".into()));
@@ -486,9 +484,7 @@ impl Robot for Go2 {
 
     fn send_command(&self, cmd: Command) -> Result<()> {
         if !self.config.edu_mode {
-            return Err(Error::Config(
-                "Generic commands require EDU mode".into(),
-            ));
+            return Err(Error::Config("Generic commands require EDU mode".into()));
         }
 
         let mut low_cmd = LowCmd::default();
@@ -496,12 +492,16 @@ impl Robot for Go2 {
         if let Some(positions) = cmd.positions {
             let kp = cmd.kp.unwrap_or_else(|| {
                 let mut av = arrayvec::ArrayVec::new();
-                for _ in 0..NUM_MOTORS { av.push(20.0); }
+                for _ in 0..NUM_MOTORS {
+                    av.push(20.0);
+                }
                 av
             });
             let kd = cmd.kd.unwrap_or_else(|| {
                 let mut av = arrayvec::ArrayVec::new();
-                for _ in 0..NUM_MOTORS { av.push(0.5); }
+                for _ in 0..NUM_MOTORS {
+                    av.push(0.5);
+                }
                 av
             });
 

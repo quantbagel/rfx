@@ -64,7 +64,11 @@ pub struct So101 {
 impl So101 {
     /// Connect to an SO-101 arm
     pub fn connect(config: So101Config) -> Result<Self, Error> {
-        tracing::info!("Connecting to SO-101 on {} at {} baud", config.port, config.baudrate);
+        tracing::info!(
+            "Connecting to SO-101 on {} at {} baud",
+            config.port,
+            config.baudrate
+        );
 
         // Open serial port
         let port = serialport::new(&config.port, config.baudrate)
