@@ -5,10 +5,9 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 current_branch="$(git rev-parse --abbrev-ref HEAD)"
-if [[ "$current_branch" == "main" && "${RFX_ALLOW_MAIN_PUSH:-0}" != "1" ]]; then
-  echo "Direct pushes to 'main' are blocked."
-  echo "Push your branch and open a PR into main."
-  echo "Set RFX_ALLOW_MAIN_PUSH=1 to override intentionally."
+if [[ "$current_branch" == "main" && "${RFX_BLOCK_MAIN_PUSH:-0}" == "1" ]]; then
+  echo "Direct pushes to 'main' are blocked (RFX_BLOCK_MAIN_PUSH=1)."
+  echo "Push your branch and open a PR into main, or unset RFX_BLOCK_MAIN_PUSH."
   exit 1
 fi
 
