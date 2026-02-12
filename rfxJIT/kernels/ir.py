@@ -22,12 +22,13 @@ class OpCode(str, Enum):
     DIV = "div"
     NEG = "neg"
     RELU = "relu"
+    STEP = "step"
     EXP = "exp"
     LOG = "log"
     CONST = "const"
 
 
-_UNARY_OPS = {OpCode.NEG, OpCode.RELU, OpCode.EXP, OpCode.LOG}
+_UNARY_OPS = {OpCode.NEG, OpCode.RELU, OpCode.STEP, OpCode.EXP, OpCode.LOG}
 _BINARY_OPS = {OpCode.ADD, OpCode.SUB, OpCode.MUL, OpCode.DIV}
 
 

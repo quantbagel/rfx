@@ -18,6 +18,12 @@
 - Constant folding and dead op elimination. (landed)
 - Cost model for launch vs fusion decisions.
 
+## Phase 2.5: Functional Transforms
+
+- tinyJIT-style trace/cache/replay runtime. (landed)
+- IR-based gradients for elementwise kernels. (landed)
+- `grad` / `value_and_grad` transform API. (landed)
+
 ## Phase 3: Integration
 
 - Wire JIT path into selected `rfx` execution points behind feature flags.

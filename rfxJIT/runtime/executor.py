@@ -39,6 +39,8 @@ def _execute_op(
         out = -a0
     elif op.op == OpCode.RELU:
         out = np.maximum(a0, 0.0)
+    elif op.op == OpCode.STEP:
+        out = (a0 > 0).astype(dtype)
     elif op.op == OpCode.EXP:
         out = np.exp(a0)
     elif op.op == OpCode.LOG:

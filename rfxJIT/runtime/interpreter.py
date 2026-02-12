@@ -57,6 +57,8 @@ def execute_kernel(kernel: KernelIR, named_inputs: Mapping[str, np.ndarray]) -> 
             out = -args[0]
         elif op.op == OpCode.RELU:
             out = np.maximum(args[0], 0.0)
+        elif op.op == OpCode.STEP:
+            out = (args[0] > 0).astype(kernel.output.dtype.value)
         elif op.op == OpCode.EXP:
             out = np.exp(args[0])
         elif op.op == OpCode.LOG:

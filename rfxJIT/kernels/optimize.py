@@ -138,13 +138,15 @@ def constant_fold_ir(kernel: KernelIR) -> KernelIR:
 
         input_consts = [const_values.get(name) for name in folded.inputs]
 
-        if folded.op in {OpCode.NEG, OpCode.RELU, OpCode.EXP, OpCode.LOG}:
+        if folded.op in {OpCode.NEG, OpCode.RELU, OpCode.STEP, OpCode.EXP, OpCode.LOG}:
             const_input = input_consts[0]
             if const_input is not None:
                 if folded.op == OpCode.NEG:
                     emit_const(folded.out, -const_input)
                 elif folded.op == OpCode.RELU:
                     emit_const(folded.out, max(const_input, 0.0))
+                elif folded.op == OpCode.STEP:
+                    emit_const(folded.out, 1.0 if const_input > 0.0 else 0.0)
                 elif folded.op == OpCode.EXP:
                     emit_const(folded.out, float(math.exp(const_input)))
                 elif folded.op == OpCode.LOG:

@@ -6,6 +6,11 @@ Workstream for JIT-related systems in rfx:
 - runtime execution plans
 - performance experiments
 
+Design target:
+- PyTorch-like ergonomics for model code
+- JAX-style functional transforms (`grad`, `value_and_grad`) over IR
+- TVM-style pass pipeline (optimization and lowering) while staying tiny/hackable
+
 ## Current Focus
 
 - define a small, explicit IR for kernels
@@ -39,6 +44,13 @@ Workstream for JIT-related systems in rfx:
 - constant folding + dead-op elimination + simple chain fusion
 - optimization tests: `rfxJIT/tests/test_optimize.py`
 - benchmark now reports op count before/after optimization
+
+## Transform Status
+
+- tracer API for Python expression capture: `rfxJIT/kernels/trace.py`
+- tinyJIT-style cache+replay runtime: `rfxJIT/runtime/tinyjit.py`
+- IR autodiff + functional transforms: `grad`, `value_and_grad`
+- transform tests: `rfxJIT/tests/test_tinyjit.py`, `rfxJIT/tests/test_grad_transforms.py`
 
 Run the benchmark:
 
