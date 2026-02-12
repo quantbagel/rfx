@@ -1,5 +1,11 @@
 # rfx
 
+## Project North Star
+
+- `rfxJIT` is the ultra-performance kernel engine for the project.
+- `rfx` remains the product surface, while stable JIT/compiler pieces are promoted into it.
+- Long term, execution should be `rfxJIT`-first, reducing reliance on Python-to-Rust bindings.
+
 ## Install From Source (Recommended)
 
 Prerequisites:
