@@ -140,7 +140,6 @@ class Quaternion:
         """Yaw angle in radians."""
         ...
 
-
 class Transform:
     """
     A rigid body transformation in 3D space (SE3).
@@ -261,7 +260,6 @@ class Transform:
         """Yaw angle in radians."""
         ...
 
-
 class LowPassFilter:
     """
     Low-pass filter for signal smoothing.
@@ -322,7 +320,6 @@ class LowPassFilter:
         """Smoothing factor."""
         ...
 
-
 # =============================================================================
 # Communication Types
 # =============================================================================
@@ -361,7 +358,6 @@ class Topic:
     def name(self) -> str:
         """Topic name."""
         ...
-
 
 # =============================================================================
 # Control Types
@@ -410,7 +406,6 @@ class PidConfig:
     def kd(self) -> float:
         """Derivative gain."""
         ...
-
 
 class Pid:
     """
@@ -467,7 +462,6 @@ class Pid:
         """Update the controller gains."""
         ...
 
-
 class ControlLoopStats:
     """Statistics for a control loop."""
 
@@ -491,7 +485,6 @@ class ControlLoopStats:
         """Maximum iteration time in milliseconds."""
         ...
 
-
 class ControlLoopHandle:
     """
     Handle to a running control loop.
@@ -514,7 +507,6 @@ class ControlLoopHandle:
     def stats(self) -> Optional[ControlLoopStats]:
         """Get current loop statistics."""
         ...
-
 
 def run_control_loop(
     rate_hz: float,
@@ -544,7 +536,6 @@ def run_control_loop(
         >>> stats = run_control_loop(500.0, control_callback)
     """
     ...
-
 
 # =============================================================================
 # Hardware Types
@@ -591,7 +582,6 @@ class Go2Config:
     def edu_mode(self) -> bool:
         """Whether EDU mode is enabled."""
         ...
-
 
 class ImuState:
     """IMU sensor state from the robot."""
@@ -646,7 +636,6 @@ class ImuState:
         """Yaw angle in degrees."""
         ...
 
-
 class MotorState:
     """State of a single motor."""
 
@@ -669,7 +658,6 @@ class MotorState:
     def temperature(self) -> int:
         """Motor temperature in Celsius."""
         ...
-
 
 class MotorCmd:
     """
@@ -731,7 +719,6 @@ class MotorCmd:
         """Damping gain."""
         ...
 
-
 class Go2State:
     """
     Complete state of the Go2 robot.
@@ -791,7 +778,6 @@ class Go2State:
             ValueError: If index is out of range
         """
         ...
-
 
 class Go2:
     """
@@ -890,7 +876,6 @@ class Go2:
         """
         ...
 
-
 # =============================================================================
 # Motor Constants
 # =============================================================================
@@ -920,10 +905,8 @@ class motor_idx:
 
     NUM_MOTORS: int
 
-
 MOTOR_NAMES: List[str]
 """Motor names in order: ['FR_hip', 'FR_thigh', 'FR_calf', ...]"""
-
 
 def motor_index_by_name(name: str) -> Optional[int]:
     """
@@ -936,7 +919,6 @@ def motor_index_by_name(name: str) -> Optional[int]:
         Motor index (0-11) or None if not found
     """
     ...
-
 
 # =============================================================================
 # Simulation Types
@@ -985,7 +967,6 @@ class PhysicsConfig:
     def gravity(self) -> Tuple[float, float, float]:
         """Gravity vector [x, y, z] in m/s^2."""
         ...
-
 
 class SimConfig:
     """
@@ -1040,7 +1021,6 @@ class SimConfig:
         """Number of parallel environments."""
         ...
 
-
 class SimState:
     """
     State returned from simulation step.
@@ -1078,7 +1058,6 @@ class SimState:
     def joint_velocities(self) -> List[float]:
         """Get joint velocities from robot state."""
         ...
-
 
 class MockSimBackend:
     """
@@ -1127,7 +1106,6 @@ class MockSimBackend:
     def sim_time(self) -> float:
         """Get current simulation time."""
         ...
-
 
 # =============================================================================
 # Channel Types
@@ -1185,7 +1163,6 @@ class Sender:
     def capacity(self) -> Optional[int]:
         """Channel capacity (None for unbounded)."""
         ...
-
 
 class Receiver:
     """
@@ -1257,7 +1234,6 @@ class Receiver:
         """Number of messages in the channel."""
         ...
 
-
 def channel(capacity: int) -> Tuple[Sender, Receiver]:
     """
     Create a bounded channel with the specified capacity.
@@ -1274,7 +1250,6 @@ def channel(capacity: int) -> Tuple[Sender, Receiver]:
     """
     ...
 
-
 def unbounded_channel() -> Tuple[Sender, Receiver]:
     """
     Create an unbounded channel.
@@ -1287,7 +1262,6 @@ def unbounded_channel() -> Tuple[Sender, Receiver]:
         for backpressure in production systems.
     """
     ...
-
 
 # =============================================================================
 # Stream Types
@@ -1356,7 +1330,6 @@ class Stream:
     def is_active(self) -> bool:
         """Check if the stream is still active."""
         ...
-
 
 def stream_from_receiver(receiver: Receiver) -> Stream:
     """

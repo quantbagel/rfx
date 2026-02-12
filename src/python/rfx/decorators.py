@@ -13,6 +13,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 try:
     from tinygrad.engine.jit import TinyJit
+
     TINYGRAD_AVAILABLE = True
 except ImportError:
     TinyJit = lambda x: x  # no-op if tinygrad not available
@@ -44,6 +45,7 @@ def control_loop(
         >>>
         >>> go2.run(balance_policy, timeout=30.0)
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -53,6 +55,10 @@ def control_loop(
         wrapper._rfx_control_loop = True  # type: ignore
         wrapper._rfx_rate_hz = rate_hz  # type: ignore
         wrapper._rfx_name = name or func.__name__  # type: ignore
+        # Backward-compatible metadata aliases.
+        wrapper._pi_control_loop = True  # type: ignore
+        wrapper._pi_rate_hz = rate_hz  # type: ignore
+        wrapper._pi_name = name or func.__name__  # type: ignore
 
         return wrapper  # type: ignore
 
@@ -60,16 +66,18 @@ def control_loop(
 
 
 def policy(
-    jit: bool = True,
+    model: Optional[str] = None,
+    jit: bool = False,
 ) -> Callable[[F], F]:
     """
     Decorator to mark a function as a neural policy.
 
-    When jit=True (default), the function will be JIT compiled using tinygrad's
+    When jit=True, the function will be JIT compiled using tinygrad's
     TinyJit for optimized inference after the first call.
 
     Args:
-        jit: Whether to JIT compile the policy (default: True)
+        model: Optional model path. If provided, raises NotImplementedError at runtime.
+        jit: Whether to JIT compile the policy (default: False)
 
     Example:
         >>> from tinygrad import Tensor
@@ -96,22 +104,37 @@ def policy(
         ...     def forward(self, obs: Tensor) -> Tensor:
         ...         return self.mlp(obs)
     """
+
     def decorator(func: F) -> F:
+        if model is not None:
+
+            @functools.wraps(func)
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                raise NotImplementedError(
+                    "Neural network policies from model files are not implemented yet."
+                )
         # Apply TinyJit if requested and available
-        if jit and TINYGRAD_AVAILABLE:
+        elif jit and TINYGRAD_AVAILABLE:
             jit_func = TinyJit(func)
 
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 return jit_func(*args, **kwargs)
         else:
+
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 return func(*args, **kwargs)
 
+        # Apply TinyJit if requested and available
         # Attach metadata
         wrapper._rfx_policy = True  # type: ignore
         wrapper._rfx_jit = jit  # type: ignore
+        wrapper._rfx_model = model  # type: ignore
+        # Backward-compatible metadata aliases.
+        wrapper._pi_policy = True  # type: ignore
+        wrapper._pi_jit = jit  # type: ignore
+        wrapper._pi_model = model  # type: ignore
 
         return wrapper  # type: ignore
 

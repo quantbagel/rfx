@@ -36,6 +36,7 @@ class MjxBackend:
             from mujoco import mjx
             import jax
             import jax.numpy as jnp
+
             self._mujoco = mujoco
             self._mjx = mjx
             self._jax = jax
@@ -85,6 +86,7 @@ class MjxBackend:
 
     def _jax_to_torch(self, arr) -> torch.Tensor:
         import numpy as np
+
         return torch.from_numpy(np.asarray(arr)).to(self.device)
 
     def _torch_to_jax(self, tensor: torch.Tensor):

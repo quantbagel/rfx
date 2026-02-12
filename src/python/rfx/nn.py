@@ -21,7 +21,13 @@ import numpy as np
 try:
     from tinygrad import Tensor, dtypes
     from tinygrad.nn import Linear
-    from tinygrad.nn.state import get_parameters, get_state_dict, load_state_dict, safe_save, safe_load
+    from tinygrad.nn.state import (
+        get_parameters,
+        get_state_dict,
+        load_state_dict,
+        safe_save,
+        safe_load,
+    )
     from tinygrad.engine.jit import TinyJit
 
     TINYGRAD_AVAILABLE = True
@@ -34,8 +40,7 @@ except ImportError:
 def _check_tinygrad():
     if not TINYGRAD_AVAILABLE:
         raise ImportError(
-            "tinygrad is required for neural network support. "
-            "Install with: pip install tinygrad"
+            "tinygrad is required for neural network support. Install with: pip install tinygrad"
         )
 
 
@@ -294,9 +299,7 @@ class ActorCritic(Policy):
 
         # Log probability (simplified, ignoring tanh correction)
         log_prob = (
-            -0.5 * ((action - action_mean) / std).pow(2)
-            - self.log_std
-            - 0.5 * np.log(2 * np.pi)
+            -0.5 * ((action - action_mean) / std).pow(2) - self.log_std - 0.5 * np.log(2 * np.pi)
         ).sum(axis=-1)
 
         # Entropy

@@ -44,8 +44,7 @@ if TYPE_CHECKING:
 def _check_tinygrad():
     if not TINYGRAD_AVAILABLE:
         raise ImportError(
-            "tinygrad is required for RL training. "
-            "Install with: pip install tinygrad"
+            "tinygrad is required for RL training. Install with: pip install tinygrad"
         )
 
 
@@ -108,9 +107,7 @@ class Rollout:
 
         return returns
 
-    def compute_advantages(
-        self, gamma: float = 0.99, gae_lambda: float = 0.95
-    ) -> np.ndarray:
+    def compute_advantages(self, gamma: float = 0.99, gae_lambda: float = 0.95) -> np.ndarray:
         """
         Compute Generalized Advantage Estimation (GAE).
 

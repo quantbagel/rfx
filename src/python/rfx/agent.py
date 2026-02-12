@@ -38,9 +38,11 @@ from .skills import Skill, SkillRegistry, skill
 # Completion Result Types
 # =============================================================================
 
+
 @dataclass
 class ToolCall:
     """Represents a tool call from the LLM."""
+
     id: str
     name: str
     arguments: Dict[str, Any]
@@ -49,6 +51,7 @@ class ToolCall:
 @dataclass
 class CompletionResult:
     """Result from an LLM completion."""
+
     text: Optional[str]
     tool_calls: List[ToolCall]
     raw_response: Any = None
@@ -57,6 +60,7 @@ class CompletionResult:
 # =============================================================================
 # LLM Client Protocol
 # =============================================================================
+
 
 class LLMClient(ABC):
     """
@@ -120,6 +124,7 @@ class AnthropicClient(LLMClient):
     def __init__(self, api_key: Optional[str] = None) -> None:
         try:
             import anthropic
+
             self._client = anthropic.Anthropic(api_key=api_key)
         except ImportError:
             raise ImportError(
@@ -150,11 +155,13 @@ class AnthropicClient(LLMClient):
             if block.type == "text":
                 text_parts.append(block.text)
             elif block.type == "tool_use":
-                tool_calls.append(ToolCall(
-                    id=block.id,
-                    name=block.name,
-                    arguments=block.input,
-                ))
+                tool_calls.append(
+                    ToolCall(
+                        id=block.id,
+                        name=block.name,
+                        arguments=block.input,
+                    )
+                )
 
         return CompletionResult(
             text="\n".join(text_parts) if text_parts else None,
@@ -187,11 +194,11 @@ class OpenAIClient(LLMClient):
     def __init__(self, api_key: Optional[str] = None) -> None:
         try:
             import openai
+
             self._client = openai.OpenAI(api_key=api_key)
         except ImportError:
             raise ImportError(
-                "openai package is required for OpenAI models. "
-                "Install with: pip install openai"
+                "openai package is required for OpenAI models. Install with: pip install openai"
             )
 
     def create_completion(
@@ -215,11 +222,13 @@ class OpenAIClient(LLMClient):
 
         if message.tool_calls:
             for tc in message.tool_calls:
-                tool_calls.append(ToolCall(
-                    id=tc.id,
-                    name=tc.function.name,
-                    arguments=json.loads(tc.function.arguments),
-                ))
+                tool_calls.append(
+                    ToolCall(
+                        id=tc.id,
+                        name=tc.function.name,
+                        arguments=json.loads(tc.function.arguments),
+                    )
+                )
 
         return CompletionResult(
             text=message.content,
@@ -247,6 +256,7 @@ class OpenAIClient(LLMClient):
 # Agent Configuration
 # =============================================================================
 
+
 @dataclass
 class AgentConfig:
     """Configuration for the LLM agent."""
@@ -273,6 +283,7 @@ Be concise and action-oriented. Focus on executing the user's commands efficient
 # =============================================================================
 # Agent
 # =============================================================================
+
 
 class Agent:
     """
@@ -329,8 +340,8 @@ class Agent:
             # Default to Anthropic
             return "anthropic"
 
-    def _get_client(self) -> LLMClient:
-        """Get or create the LLM client."""
+    def _get_llm_client(self) -> LLMClient:
+        """Get or create the typed LLM client wrapper."""
         if self._llm_client is not None:
             return self._llm_client
 
@@ -340,6 +351,11 @@ class Agent:
             self._llm_client = OpenAIClient(api_key=self.config.api_key)
 
         return self._llm_client
+
+    def _get_client(self) -> Any:
+        """Legacy accessor returning the raw provider client."""
+        llm_client = self._get_llm_client()
+        return getattr(llm_client, "_client", None)
 
     # Legacy property for backward compatibility
     @property
@@ -377,7 +393,7 @@ class Agent:
         Returns:
             A string describing what was done
         """
-        client = self._get_client()
+        client = self._get_llm_client()
 
         # Get tools in the appropriate format
         if self._api_type == "anthropic":

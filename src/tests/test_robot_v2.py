@@ -1,8 +1,17 @@
 """Tests for rfx v2 Robot API"""
 
-import pytest
-import torch
+import importlib.util
 from pathlib import Path
+
+import pytest
+
+TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
+pytestmark = pytest.mark.skipif(not TORCH_AVAILABLE, reason="torch is required")
+
+if TORCH_AVAILABLE:
+    import torch
+else:
+    torch = None
 
 from rfx import Robot, RobotBase, SimRobot, MockRobot, RobotConfig
 from rfx.sim.mock import MockBackend

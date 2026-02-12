@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 @dataclass
 class ObservationSpec:
     """Specification for observation structure."""
+
     state_dim: int
     max_state_dim: int = 64
     image_shape: Optional[tuple] = None
@@ -73,11 +74,13 @@ def unpad_action(action: "torch.Tensor", action_dim: int) -> "torch.Tensor":
 @dataclass
 class ObservationBuffer:
     """Buffer for storing observation history (for frame stacking)."""
+
     capacity: int
     _buffer: List[Dict[str, "torch.Tensor"]] = field(default_factory=list)
 
     def push(self, obs: Dict[str, "torch.Tensor"]) -> None:
         import torch
+
         obs_copy = {k: v.clone() for k, v in obs.items()}
         self._buffer.append(obs_copy)
         if len(self._buffer) > self.capacity:
@@ -85,6 +88,7 @@ class ObservationBuffer:
 
     def get_stacked(self) -> Dict[str, "torch.Tensor"]:
         import torch
+
         if not self._buffer:
             raise ValueError("Buffer is empty")
         result = {}

@@ -34,9 +34,11 @@ F = TypeVar("F", bound=Callable[..., Any])
 # Docstring Parsing
 # =============================================================================
 
+
 @dataclass
 class ParsedDocstring:
     """Parsed docstring components."""
+
     description: str
     params: Dict[str, str]  # param_name -> description
     returns: Optional[str] = None
@@ -155,7 +157,9 @@ def _parse_docstring(docstring: Optional[str]) -> ParsedDocstring:
                     params[current_param] = " ".join(current_param_desc)
 
                 current_param = param_match.group(1)
-                current_param_desc = [param_match.group(2).strip()] if param_match.group(2).strip() else []
+                current_param_desc = (
+                    [param_match.group(2).strip()] if param_match.group(2).strip() else []
+                )
             elif continuation_match and current_param:
                 current_param_desc.append(continuation_match.group(1).strip())
             elif not line.strip():
@@ -367,6 +371,7 @@ def skill(
         ...     time.sleep(2.0)
         ...     go2.stand()
     """
+
     def decorator(f: F) -> Skill:
         skill_name = name or f.__name__
 
@@ -482,8 +487,7 @@ class SkillRegistry:
             lines.append(f"  - {skill.name}: {skill.description}")
             if skill.parameters:
                 params = ", ".join(
-                    f"{k}: {v.get('type', 'any')}"
-                    for k, v in skill.parameters.items()
+                    f"{k}: {v.get('type', 'any')}" for k, v in skill.parameters.items()
                 )
                 lines.append(f"      Parameters: {params}")
         return "\n".join(lines)
@@ -500,9 +504,7 @@ from typing import Iterator
 
 
 # Context variable for async-safe registry scoping
-_registry_context: ContextVar[Optional[SkillRegistry]] = ContextVar(
-    "skill_registry", default=None
-)
+_registry_context: ContextVar[Optional[SkillRegistry]] = ContextVar("skill_registry", default=None)
 
 # Legacy global registry (deprecated)
 _global_registry: Optional[SkillRegistry] = None

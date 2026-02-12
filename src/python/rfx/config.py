@@ -13,6 +13,7 @@ import os
 @dataclass
 class CameraConfig:
     """Configuration for a camera."""
+
     name: str = "camera"
     width: int = 640
     height: int = 480
@@ -27,6 +28,7 @@ class CameraConfig:
 @dataclass
 class JointConfig:
     """Configuration for a single joint."""
+
     name: str
     index: int
     position_min: float = -3.14159
@@ -56,6 +58,7 @@ class RobotConfig:
         control_freq_hz: Control loop frequency
         hardware: Hardware-specific settings
     """
+
     name: str = "robot"
     urdf_path: Optional[str] = None
     state_dim: int = 12
@@ -78,6 +81,7 @@ class RobotConfig:
     @classmethod
     def from_yaml(cls, path: Union[str, Path]) -> "RobotConfig":
         import yaml
+
         path = Path(path)
         if not path.exists():
             for search_path in _get_config_search_paths():

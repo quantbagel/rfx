@@ -55,11 +55,7 @@ class Box:
 
     def contains(self, x: np.ndarray) -> bool:
         """Check if x is a valid member of the space."""
-        return (
-            x.shape == self.shape
-            and np.all(x >= self.low)
-            and np.all(x <= self.high)
-        )
+        return x.shape == self.shape and np.all(x >= self.low) and np.all(x <= self.high)
 
     def clip(self, x: np.ndarray) -> np.ndarray:
         """Clip x to be within bounds."""
@@ -152,26 +148,56 @@ class Go2Env(BaseEnv):
     """
 
     # Go2 joint limits (radians)
-    JOINT_LIMITS_LOW = np.array([
-        -0.863, -0.686, -2.818,  # FR: hip, thigh, calf
-        -0.863, -0.686, -2.818,  # FL
-        -0.863, -0.686, -2.818,  # RR
-        -0.863, -0.686, -2.818,  # RL
-    ])
-    JOINT_LIMITS_HIGH = np.array([
-        0.863, 2.818, -0.888,    # FR
-        0.863, 2.818, -0.888,    # FL
-        0.863, 2.818, -0.888,    # RR
-        0.863, 2.818, -0.888,    # RL
-    ])
+    JOINT_LIMITS_LOW = np.array(
+        [
+            -0.863,
+            -0.686,
+            -2.818,  # FR: hip, thigh, calf
+            -0.863,
+            -0.686,
+            -2.818,  # FL
+            -0.863,
+            -0.686,
+            -2.818,  # RR
+            -0.863,
+            -0.686,
+            -2.818,  # RL
+        ]
+    )
+    JOINT_LIMITS_HIGH = np.array(
+        [
+            0.863,
+            2.818,
+            -0.888,  # FR
+            0.863,
+            2.818,
+            -0.888,  # FL
+            0.863,
+            2.818,
+            -0.888,  # RR
+            0.863,
+            2.818,
+            -0.888,  # RL
+        ]
+    )
 
     # Default standing pose
-    DEFAULT_STANDING = np.array([
-        0.0, 0.8, -1.5,   # FR
-        0.0, 0.8, -1.5,   # FL
-        0.0, 0.8, -1.5,   # RR
-        0.0, 0.8, -1.5,   # RL
-    ])
+    DEFAULT_STANDING = np.array(
+        [
+            0.0,
+            0.8,
+            -1.5,  # FR
+            0.0,
+            0.8,
+            -1.5,  # FL
+            0.0,
+            0.8,
+            -1.5,  # RR
+            0.0,
+            0.8,
+            -1.5,  # RL
+        ]
+    )
 
     def __init__(
         self,
@@ -236,8 +262,7 @@ class Go2Env(BaseEnv):
             self._using_rfx_backend = True
         except ImportError:
             raise RuntimeError(
-                "Real robot control requires the rfx Rust extension. "
-                "Build with: maturin develop"
+                "Real robot control requires the rfx Rust extension. Build with: maturin develop"
             )
 
     @property
@@ -314,8 +339,8 @@ class Go2Env(BaseEnv):
     def _get_observation(self) -> np.ndarray:
         """Construct observation vector."""
         if self._using_rfx_backend:
-            state = self._backend.state() if hasattr(self._backend, 'state') else None
-            if state is not None and hasattr(state, 'joint_positions'):
+            state = self._backend.state() if hasattr(self._backend, "state") else None
+            if state is not None and hasattr(state, "joint_positions"):
                 joint_pos = np.array(state.joint_positions())
                 joint_vel = np.array(state.joint_velocities())
             else:
@@ -332,22 +357,26 @@ class Go2Env(BaseEnv):
         projected_gravity = np.array([0.0, 0.0, -1.0])
 
         # Clock signals for gait timing
-        clock = np.array([
-            np.sin(self._phase),
-            np.cos(self._phase),
-            np.sin(self._phase / 2),
-        ])
+        clock = np.array(
+            [
+                np.sin(self._phase),
+                np.cos(self._phase),
+                np.sin(self._phase / 2),
+            ]
+        )
 
         # Concatenate observation
-        obs = np.concatenate([
-            joint_pos,           # 12
-            joint_vel,           # 12
-            base_ang_vel,        # 3
-            projected_gravity,   # 3
-            self._commands,      # 3
-            self._last_action,   # 12
-            clock,               # 3
-        ])
+        obs = np.concatenate(
+            [
+                joint_pos,  # 12
+                joint_vel,  # 12
+                base_ang_vel,  # 3
+                projected_gravity,  # 3
+                self._commands,  # 3
+                self._last_action,  # 12
+                clock,  # 3
+            ]
+        )
 
         return obs.astype(np.float32)
 
@@ -368,14 +397,14 @@ class Go2Env(BaseEnv):
         reward += 0.1
 
         # Penalize large actions (energy efficiency)
-        action_penalty = -0.01 * np.sum(self._last_action ** 2)
+        action_penalty = -0.01 * np.sum(self._last_action**2)
         reward += action_penalty
 
         return reward
 
     def close(self) -> None:
         """Clean up resources."""
-        if hasattr(self._backend, 'disconnect'):
+        if hasattr(self._backend, "disconnect"):
             self._backend.disconnect()
 
 

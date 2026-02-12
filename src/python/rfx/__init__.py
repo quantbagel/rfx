@@ -90,11 +90,21 @@ except ImportError:
 from .robot import Robot, RobotBase
 from .config import RobotConfig, CameraConfig, JointConfig, load_config
 from .observation import ObservationSpec, make_observation, unpad_action
-from .sim import SimRobot, MockRobot
-from .real import RealRobot
-from . import sim
-from . import real
 from . import utils
+
+# Optional runtime dependencies (torch/camera stacks) are not required for
+# lightweight API/skill usage, so guard these imports.
+try:
+    from .sim import SimRobot, MockRobot
+    from .real import RealRobot
+    from . import sim
+    from . import real
+except ModuleNotFoundError:
+    SimRobot = None
+    MockRobot = None
+    RealRobot = None
+    sim = None
+    real = None
 
 # ============================================================================
 # rfx v1 API (backward compatible)
@@ -103,9 +113,15 @@ from . import utils
 from .skills import skill, Skill, SkillRegistry
 from .agent import Agent
 from .decorators import control_loop, policy, MotorCommands
-from . import nn
-from . import rl
-from . import envs
+
+try:
+    from . import nn
+    from . import rl
+    from . import envs
+except ModuleNotFoundError:
+    nn = None
+    rl = None
+    envs = None
 
 __all__ = [
     # v2 API

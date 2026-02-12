@@ -33,6 +33,7 @@ class GenesisBackend:
 
         try:
             import genesis as gs
+
             self._gs = gs
         except ImportError:
             raise ImportError(

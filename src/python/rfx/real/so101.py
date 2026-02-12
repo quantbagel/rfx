@@ -32,6 +32,7 @@ class So101Backend:
 
         try:
             from rfx._rfx import So101, So101Config
+
             self._So101 = So101
             self._So101Config = So101Config
         except ImportError:
@@ -54,6 +55,7 @@ class So101Backend:
         camera_id = kwargs.get("camera_id")
         if camera_id is not None:
             from .camera import Camera
+
             self._camera = Camera(device_id=camera_id)
 
     def is_connected(self) -> bool:
@@ -107,13 +109,16 @@ class So101Robot:
 
     def __new__(cls, port: str = "/dev/ttyACM0", **kwargs):
         from .base import RealRobot
+
         return RealRobot(config=SO101_CONFIG, robot_type="so101", port=port, **kwargs)
 
 
 class So101LeaderFollower:
     """Leader-follower teleoperation setup."""
 
-    def __init__(self, leader_port: str = "/dev/ttyACM0", follower_port: str = "/dev/ttyACM1", **kwargs):
+    def __init__(
+        self, leader_port: str = "/dev/ttyACM0", follower_port: str = "/dev/ttyACM1", **kwargs
+    ):
         self._leader = So101Backend(config=SO101_CONFIG, port=leader_port, is_leader=True)
         self._follower = So101Backend(config=SO101_CONFIG, port=follower_port, is_leader=False)
 
@@ -134,6 +139,7 @@ class So101LeaderFollower:
 
     def run(self, callback=None):
         import time
+
         print("Starting teleoperation. Press Ctrl+C to stop.")
         try:
             while True:

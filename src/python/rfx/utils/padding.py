@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 @dataclass
 class PaddingConfig:
     """Configuration for state/action padding."""
+
     state_dim: int
     action_dim: int
     max_state_dim: int = 64
@@ -21,9 +22,13 @@ class PaddingConfig:
 
     def __post_init__(self):
         if self.max_state_dim < self.state_dim:
-            raise ValueError(f"max_state_dim ({self.max_state_dim}) must be >= state_dim ({self.state_dim})")
+            raise ValueError(
+                f"max_state_dim ({self.max_state_dim}) must be >= state_dim ({self.state_dim})"
+            )
         if self.max_action_dim < self.action_dim:
-            raise ValueError(f"max_action_dim ({self.max_action_dim}) must be >= action_dim ({self.action_dim})")
+            raise ValueError(
+                f"max_action_dim ({self.max_action_dim}) must be >= action_dim ({self.action_dim})"
+            )
 
 
 def pad_state(state: "torch.Tensor", state_dim: int, max_state_dim: int) -> "torch.Tensor":
@@ -39,7 +44,9 @@ def pad_state(state: "torch.Tensor", state_dim: int, max_state_dim: int) -> "tor
         padding = torch.zeros(state.shape[0], pad_size, device=state.device, dtype=state.dtype)
         return torch.cat([state, padding], dim=-1)
     elif state.dim() == 3:
-        padding = torch.zeros(state.shape[0], state.shape[1], pad_size, device=state.device, dtype=state.dtype)
+        padding = torch.zeros(
+            state.shape[0], state.shape[1], pad_size, device=state.device, dtype=state.dtype
+        )
         return torch.cat([state, padding], dim=-1)
     else:
         raise ValueError(f"Expected 2D or 3D tensor, got {state.dim()}D")
@@ -58,7 +65,9 @@ def pad_action(action: "torch.Tensor", action_dim: int, max_action_dim: int) -> 
         padding = torch.zeros(action.shape[0], pad_size, device=action.device, dtype=action.dtype)
         return torch.cat([action, padding], dim=-1)
     elif action.dim() == 3:
-        padding = torch.zeros(action.shape[0], action.shape[1], pad_size, device=action.device, dtype=action.dtype)
+        padding = torch.zeros(
+            action.shape[0], action.shape[1], pad_size, device=action.device, dtype=action.dtype
+        )
         return torch.cat([action, padding], dim=-1)
     else:
         raise ValueError(f"Expected 2D or 3D tensor, got {action.dim()}D")

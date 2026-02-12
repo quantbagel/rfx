@@ -21,6 +21,7 @@ class Camera:
     def _init_camera(self):
         try:
             import cv2
+
             self._cv2 = cv2
         except ImportError:
             raise ImportError("OpenCV not installed. Install with: pip install opencv-python")
@@ -72,6 +73,7 @@ class RealSenseCamera:
         try:
             import pyrealsense2 as rs
             import numpy as np
+
             self._rs = rs
             self._np = np
         except ImportError:
@@ -83,8 +85,12 @@ class RealSenseCamera:
         if self.serial_number:
             config.enable_device(self.serial_number)
 
-        config.enable_stream(rs.stream.depth, self.resolution[0], self.resolution[1], rs.format.z16, self.fps)
-        config.enable_stream(rs.stream.color, self.resolution[0], self.resolution[1], rs.format.rgb8, self.fps)
+        config.enable_stream(
+            rs.stream.depth, self.resolution[0], self.resolution[1], rs.format.z16, self.fps
+        )
+        config.enable_stream(
+            rs.stream.color, self.resolution[0], self.resolution[1], rs.format.rgb8, self.fps
+        )
 
         self._pipeline.start(config)
 

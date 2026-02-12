@@ -54,12 +54,15 @@ class SimRobot(RobotBase):
     def _create_backend(self, backend: str, **kwargs):
         if backend == "genesis":
             from .genesis import GenesisBackend
+
             return GenesisBackend(self._config, self._num_envs, self._device, **kwargs)
         elif backend == "mjx":
             from .mjx import MjxBackend
+
             return MjxBackend(self._config, self._num_envs, self._device, **kwargs)
         elif backend == "mock":
             from .mock import MockBackend
+
             return MockBackend(self._config, self._num_envs, self._device, **kwargs)
         else:
             raise ValueError(f"Unknown backend: {backend}")
@@ -98,6 +101,7 @@ class SimRobot(RobotBase):
     ) -> "SimRobot":
         if device is None:
             import torch
+
             device = "cuda" if torch.cuda.is_available() else "cpu"
         return cls(config_path, num_envs=num_envs, backend=backend, device=device, **kwargs)
 

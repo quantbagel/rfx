@@ -24,6 +24,7 @@ class ObservationNormalizer:
 
     def __post_init__(self):
         import torch
+
         self._mean = torch.zeros(self.state_dim)
         self._var = torch.ones(self.state_dim)
 
@@ -48,7 +49,9 @@ class ObservationNormalizer:
         result = {}
         if "state" in obs:
             state = obs["state"]
-            normalized = (state[..., : self.state_dim] - self._mean) / (torch.sqrt(self._var) + self.eps)
+            normalized = (state[..., : self.state_dim] - self._mean) / (
+                torch.sqrt(self._var) + self.eps
+            )
             normalized = torch.clamp(normalized, -self.clip, self.clip)
             if state.shape[-1] > self.state_dim:
                 result["state"] = torch.cat([normalized, state[..., self.state_dim :]], dim=-1)
