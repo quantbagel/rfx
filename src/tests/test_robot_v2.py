@@ -14,7 +14,6 @@ else:
     torch = None
 
 from rfx import Robot, RobotBase, SimRobot, MockRobot, RobotConfig
-from rfx.sim.mock import MockBackend
 from rfx.utils import pad_state, pad_action, unpad_action
 
 
