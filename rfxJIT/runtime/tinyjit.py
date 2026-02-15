@@ -107,6 +107,15 @@ class TinyRfxJit:
     def active_backends(self) -> tuple[str, ...]:
         return tuple(sorted(self._resolved_backends))
 
+    def cached_opcode_tapes(self) -> dict[SignatureKey, dict[str, Any]]:
+        """Return serialized opcode tapes for currently cached signatures."""
+        payload: dict[SignatureKey, dict[str, Any]] = {}
+        for key, plan in self._plans.items():
+            tape = plan.compiled.opcode_tape
+            if tape is not None:
+                payload[key] = tape.to_dict()
+        return payload
+
     def clear_cache(self) -> None:
         self.close()
         self._plans.clear()

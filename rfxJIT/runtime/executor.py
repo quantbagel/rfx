@@ -14,6 +14,7 @@ from rfxJIT.kernels.codegen import (
 )
 from rfxJIT.kernels.ir import OpCode, TensorSpec
 from rfxJIT.kernels.lowering import LoweredKernel, LoweredOp
+from rfxJIT.runtime.opcode import OpcodeKernel
 
 
 def _coerce_input(value: np.ndarray, spec: TensorSpec) -> np.ndarray:
@@ -210,6 +211,7 @@ class CompiledKernel:
     backend: str
     source: str | None = None
     pseudo_asm: str = ""
+    opcode_tape: OpcodeKernel | None = None
 
 
 def available_backends() -> dict[str, bool]:
@@ -260,7 +262,18 @@ def compile_lowered_kernel(
         backend=resolved,
         source=source,
         pseudo_asm=emit_pseudo_asm(kernel),
+        opcode_tape=OpcodeKernel.from_lowered(kernel),
     )
+
+
+def compile_opcode_kernel(
+    opcode_kernel: OpcodeKernel,
+    *,
+    backend: str = "cpu",
+) -> CompiledKernel:
+    """Compile an opcode tape artifact for a runtime backend target."""
+    lowered = opcode_kernel.to_lowered()
+    return compile_lowered_kernel(lowered, backend=backend)
 
 
 def execute_compiled_kernel(
