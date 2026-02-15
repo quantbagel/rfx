@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+import json
 import threading
 import time
 from typing import Any, Protocol
@@ -15,6 +16,7 @@ import numpy as np
 
 from .config import ArmPairConfig, CameraStreamConfig, TeleopSessionConfig
 from .recorder import LeRobotRecorder, RecordedEpisode
+from .transport import TransportLike, create_transport
 
 
 @dataclass(frozen=True)
@@ -201,10 +203,12 @@ class BimanualSo101Session:
         *,
         recorder: LeRobotRecorder | None = None,
         pair_factory: Callable[[ArmPairConfig], ArmPair] | None = None,
+        transport: TransportLike | None = None,
     ) -> None:
         self.config = config
         self.recorder = recorder or LeRobotRecorder(config.output_dir)
         self._pair_factory = pair_factory or _So101ArmPair
+        self.transport = transport or create_transport(config.transport)
 
         self._pairs: list[ArmPair] = []
         self._camera_workers: list[_CameraWorker] = []
@@ -457,6 +461,11 @@ class BimanualSo101Session:
                     pair_positions=pair_positions,
                     camera_frame_indices=camera_indices,
                 )
+            self._publish_pair_positions(
+                pair_positions=pair_positions,
+                camera_indices=camera_indices,
+                timestamp_ns=timestamp_ns,
+            )
 
             next_deadline += target_period
             sleep_s = next_deadline - time.perf_counter()
@@ -470,6 +479,29 @@ class BimanualSo101Session:
                     pass
             else:
                 next_deadline = time.perf_counter()
+
+    def _publish_pair_positions(
+        self,
+        *,
+        pair_positions: Mapping[str, Sequence[float]],
+        camera_indices: Mapping[str, int],
+        timestamp_ns: int,
+    ) -> None:
+        if self.transport.subscriber_count <= 0:
+            return
+
+        for pair_name, values in pair_positions.items():
+            payload = np.asarray(values, dtype=np.float32)
+            self.transport.publish(
+                key=f"teleop/{pair_name}/state",
+                payload=memoryview(payload),
+                timestamp_ns=timestamp_ns,
+                metadata={
+                    "dtype": "float32",
+                    "shape": [int(payload.size)],
+                    "camera_frame_indices": dict(camera_indices),
+                },
+            )
 
     def _on_camera_frame(
         self,
@@ -489,6 +521,13 @@ class BimanualSo101Session:
                 frame_index=frame_index,
                 timestamp_ns=timestamp_ns,
                 frame=frame,
+            )
+
+        if self.transport.subscriber_count > 0:
+            self.transport.publish(
+                key=f"teleop/camera/{camera_name}/frame_index",
+                payload=json.dumps({"frame_index": int(frame_index)}).encode("utf-8"),
+                timestamp_ns=timestamp_ns,
             )
 
     def __enter__(self) -> "BimanualSo101Session":

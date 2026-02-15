@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import time
+import numpy as np
 
-from rfx.teleop import BimanualSo101Session, LeRobotRecorder, TeleopSessionConfig
+from rfx.teleop import BimanualSo101Session, LeRobotRecorder, TeleopSessionConfig, TransportConfig
 
 
 class _FakePair:
@@ -54,3 +55,33 @@ def test_session_collects_timing_stats_and_records_episode(tmp_path: Path) -> No
     stats_after = session.timing_stats()
     assert stats_after.p99_jitter_s >= 0.0
     session.stop()
+
+
+def test_session_publishes_state_to_transport(tmp_path: Path) -> None:
+    config = TeleopSessionConfig.single_arm_pair(
+        output_dir=tmp_path,
+        rate_hz=120.0,
+        cameras=(),
+        transport=TransportConfig(backend="inproc", zero_copy_hot_path=False),
+    )
+    session = BimanualSo101Session(
+        config=config,
+        recorder=LeRobotRecorder(tmp_path),
+        pair_factory=lambda pair_cfg: _FakePair(pair_cfg.name),
+    )
+    sub = session.transport.subscribe("teleop/main/state")
+    camera_sub = session.transport.subscribe("teleop/camera/**")
+
+    session.start()
+    try:
+        env = sub.recv(timeout_s=0.2)
+        assert env is not None
+        assert env.key == "teleop/main/state"
+        assert env.metadata["dtype"] == "float32"
+        decoded = np.frombuffer(env.payload, dtype=np.float32)
+        assert decoded.shape == (6,)
+        assert float(decoded[0]) > 0.0
+        camera_env = camera_sub.recv(timeout_s=0.05)
+        assert camera_env is None
+    finally:
+        session.stop()

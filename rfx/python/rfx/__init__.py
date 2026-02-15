@@ -127,6 +127,8 @@ try:
         TransportConfig,
         TransportEnvelope,
         assert_jitter_budget,
+        create_transport,
+        rust_transport_available,
         run_jitter_benchmark,
     )
 except ModuleNotFoundError:
@@ -148,6 +150,8 @@ except ModuleNotFoundError:
     TransportConfig = None
     TransportEnvelope = None
     assert_jitter_budget = None
+    create_transport = None
+    rust_transport_available = None
     run_jitter_benchmark = None
 
 # ============================================================================
@@ -203,6 +207,8 @@ __all__ = [
     "TransportConfig",
     "TransportEnvelope",
     "assert_jitter_budget",
+    "create_transport",
+    "rust_transport_available",
     "run_jitter_benchmark",
     # v1 API
     "__version__",

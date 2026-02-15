@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 
-from rfx.teleop import InprocTransport
+import pytest
+
+from rfx.teleop import InprocTransport, TransportConfig
 import rfx.teleop.transport as transport_mod
 
 
@@ -100,3 +102,39 @@ def test_rust_transport_adapter_uses_native_shape(monkeypatch) -> None:
     assert isinstance(env.payload, memoryview)
     assert got is not None
     assert got.metadata["x"] == 1
+
+
+def test_create_transport_prefers_rust_backend_when_available(monkeypatch) -> None:
+    class _FakeNativeTransport:
+        def __init__(self):
+            self.subscriber_count = 0
+
+        def subscribe(self, _pattern, _capacity):
+            return None
+
+        def unsubscribe(self, _id):
+            return True
+
+        def publish(self, _key, _payload, _metadata_json):
+            return None
+
+    monkeypatch.setattr(transport_mod, "_RustTransport", _FakeNativeTransport)
+    transport = transport_mod.create_transport(
+        TransportConfig(backend="inproc", zero_copy_hot_path=True)
+    )
+    assert isinstance(transport, transport_mod.RustTransport)
+
+
+def test_create_transport_falls_back_to_python_inproc(monkeypatch) -> None:
+    monkeypatch.setattr(transport_mod, "_RustTransport", None)
+    transport = transport_mod.create_transport(
+        TransportConfig(backend="inproc", zero_copy_hot_path=True)
+    )
+    assert isinstance(transport, transport_mod.InprocTransport)
+
+
+def test_create_transport_rejects_unwired_backends() -> None:
+    with pytest.raises(NotImplementedError):
+        transport_mod.create_transport(TransportConfig(backend="dds"))
+    with pytest.raises(NotImplementedError):
+        transport_mod.create_transport(TransportConfig(backend="zenoh"))

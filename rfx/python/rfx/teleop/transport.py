@@ -10,8 +10,10 @@ from fnmatch import fnmatchcase
 import json
 import threading
 import time
-from typing import Any
+from typing import Any, Protocol, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from .config import TransportConfig
 
 _BYTES_LIKE = (bytes, bytearray, memoryview)
 
@@ -82,7 +84,8 @@ class InprocTransport:
         self._lock = threading.Lock()
         self._seq = 0
 
-    def subscribe(self, pattern: str) -> Subscription:
+    def subscribe(self, pattern: str, capacity: int = 1024) -> Subscription:
+        _ = capacity  # in-process queue currently uses unbounded deques
         sub = Subscription(pattern=pattern)
         with self._lock:
             self._subscriptions.append(sub)
@@ -92,6 +95,11 @@ class InprocTransport:
         with self._lock:
             self._subscriptions = [s for s in self._subscriptions if s is not sub]
         sub.close()
+
+    @property
+    def subscriber_count(self) -> int:
+        with self._lock:
+            return len(self._subscriptions)
 
     def publish(
         self,
@@ -199,6 +207,56 @@ class RustTransport:
     @property
     def subscriber_count(self) -> int:
         return int(self._inner.subscriber_count)
+
+
+class TransportLike(Protocol):
+    """Unified transport protocol consumed by the teleop session runtime."""
+
+    def subscribe(self, pattern: str, capacity: int = 1024) -> Any: ...
+
+    def unsubscribe(self, sub: Any) -> Any: ...
+
+    def publish(
+        self,
+        key: str,
+        payload: Any,
+        *,
+        metadata: dict[str, Any] | None = None,
+        timestamp_ns: int | None = None,
+    ) -> TransportEnvelope: ...
+
+    @property
+    def subscriber_count(self) -> int: ...
+
+
+def rust_transport_available() -> bool:
+    """Return whether Rust transport bindings are importable."""
+    return _RustTransport is not None
+
+
+def create_transport(config: "TransportConfig") -> TransportLike:
+    """
+    Resolve a concrete transport backend from teleop TransportConfig.
+
+    - `inproc`: Rust-backed transport when available and `zero_copy_hot_path=True`,
+      otherwise pure-Python in-process transport.
+    - `zenoh` / `dds`: reserved backend names; explicit runtime error until wired.
+    """
+    backend = str(config.backend).strip().lower()
+    if backend == "inproc":
+        if bool(config.zero_copy_hot_path) and rust_transport_available():
+            return RustTransport()
+        return InprocTransport()
+
+    if backend in {"zenoh", "dds"}:
+        raise NotImplementedError(
+            f"Transport backend {backend!r} is declared but not wired yet. "
+            "Use backend='inproc' for now."
+        )
+
+    raise ValueError(
+        f"Unsupported transport backend {config.backend!r}. Expected one of: inproc, zenoh, dds."
+    )
 
 
 def _normalize_payload_bytes(payload: Any) -> bytes:
