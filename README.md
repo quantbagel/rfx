@@ -85,6 +85,13 @@ CLI shortcut:
 ./cli/rfx.sh bootstrap
 ```
 
+Teleop bootstrap (macOS/Metal-first workflow):
+
+```bash
+./cli/rfx.sh bootstrap-teleop
+./cli/rfx.sh doctor-teleop
+```
+
 Direct source setup shortcut:
 
 ```bash

@@ -6,7 +6,7 @@ cd "$ROOT"
 
 usage() {
   cat <<'USAGE'
-Usage: cli/rfx.sh <doctor|bootstrap|setup-source|check>
+Usage: cli/rfx.sh <doctor|doctor-teleop|bootstrap|bootstrap-teleop|setup-source|check>
 USAGE
 }
 
@@ -30,8 +30,16 @@ bootstrap() {
   bash .claude/skills/rfx-bootstrap-install/scripts/bootstrap.sh
 }
 
+bootstrap_teleop() {
+  bash scripts/bootstrap-teleop.sh
+}
+
 setup_source() {
   bash scripts/setup-from-source.sh
+}
+
+doctor_teleop() {
+  bash scripts/doctor-teleop.sh
 }
 
 check() {
@@ -50,8 +58,14 @@ main() {
     doctor)
       doctor
       ;;
+    doctor-teleop)
+      doctor_teleop
+      ;;
     bootstrap)
       bootstrap
+      ;;
+    bootstrap-teleop)
+      bootstrap_teleop
       ;;
     setup-source)
       setup_source
