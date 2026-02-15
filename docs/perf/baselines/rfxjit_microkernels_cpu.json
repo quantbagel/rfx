@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "available_backends": {
+      "cpu": true,
+      "cuda": false,
+      "metal": false
+    },
+    "machine": "arm64",
+    "platform": "macOS-15.6-arm64-arm-64bit",
+    "python_version": "3.12.12",
+    "timestamp_utc": "2026-02-12T14:30:10.948763Z"
+  },
+  "metrics": {
+    "baseline_per_iter_ms": 0.046603335067629814,
+    "baseline_total_s": 0.009320667013525963,
+    "ir_per_iter_ms": 0.12724708474706858,
+    "ir_total_s": 0.025449416949413717,
+    "lowered_optimized_per_iter_ms": 0.5322785399039276,
+    "lowered_optimized_slowdown_x": 11.421468852636742,
+    "lowered_optimized_total_s": 0.10645570798078552,
+    "lowered_per_iter_ms": 0.5958545801695436,
+    "lowered_slowdown_x": 12.785663929520313,
+    "lowered_total_s": 0.11917091603390872,
+    "ops_after": 5,
+    "ops_before": 9,
+    "queue_per_iter_ms": 0.6525949999922886,
+    "queue_slowdown_x": 14.00318236978654,
+    "queue_total_s": 0.13051899999845773,
+    "slowdown_x": 2.7304287249487658
+  },
+  "name": "rfxjit_affine_relu_phase02",
+  "parameters": {
+    "iterations": 200,
+    "requested_backend": "cpu",
+    "resolved_backend": "cpu",
+    "seed": 42,
+    "size": 65536,
+    "warmup": 10
+  },
+  "schema_version": 1
+}

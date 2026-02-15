@@ -235,6 +235,41 @@ jobs:
         run: pytest rfx/tests/integration/ -v
 
   # ===========================================================================
+  # rfxJIT Perf (warning-only gate)
+  # ===========================================================================
+  rfxjit-perf:
+    name: rfxJIT Perf (CPU soft gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run rfxJIT CPU perf check
+        run: |
+          bash scripts/perf-check.sh \
+            --baseline docs/perf/baselines/rfxjit_microkernels_cpu.json \
+            --output perf-rfxjit-cpu.json \
+            --backend cpu \
+            --size 65536 \
+            --iterations 200 \
+            --warmup 10 \
+            --threshold-pct 10
+
+      - name: Upload rfxJIT perf artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rfxjit-perf-cpu-${{ github.run_id }}
+          path: perf-rfxjit-cpu.json
+
+  # ===========================================================================
   # Benchmarks (optional, only on main)
   # ===========================================================================
   benchmarks:
@@ -305,6 +340,7 @@ jobs:
       - python-typecheck
       - python-test
       - integration-test
+      - rfxjit-perf
       - docs
     if: always()
     steps:
@@ -318,6 +354,7 @@ jobs:
              [[ "${{ needs.python-typecheck.result }}" != "success" ]] ||
              [[ "${{ needs.python-test.result }}" != "success" ]] ||
              [[ "${{ needs.integration-test.result }}" != "success" ]] ||
+             [[ "${{ needs.rfxjit-perf.result }}" != "success" ]] ||
              [[ "${{ needs.docs.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             exit 1
