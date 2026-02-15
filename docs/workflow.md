@@ -57,7 +57,9 @@ git push -u origin feat/<short-name>
 - Local hooks are installed via `pre-commit` and run at `pre-commit` and `pre-push`.
 - CI is a single workflow at `.github/workflows/ci.yml`.
 - CI runs on `main` and pull requests.
-- CI includes a warning-only `rfxJIT` CPU perf regression job.
+- `pre-push` includes strict local `rfxJIT` perf regression checks (`cpu` + available `cuda`/`metal`).
+- CI includes a warning-only `rfxJIT` CPU perf check for visibility.
+- Local perf baselines are kept in `.rfx/perf-baselines/`.
 - Optional local main-push block:
 
 ```bash
@@ -79,4 +81,10 @@ bash scripts/perf-check.sh \
   --baseline docs/perf/baselines/rfxjit_microkernels_cpu.json \
   --backend cpu \
   --threshold-pct 10
+```
+
+Run the exact pre-push perf gate:
+
+```bash
+bash scripts/perf-gate.sh
 ```

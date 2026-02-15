@@ -105,13 +105,20 @@ Dev dependencies are defined in `requirements-dev.txt` for local source installs
 
 What runs:
 - `pre-commit`: `cargo fmt --all -- --check`, then Ruff on staged Python files.
-- `pre-push`: Rust fmt/clippy/tests plus Python Ruff/mypy subset/pytest.
+- `pre-push`: Rust fmt/clippy/tests, Python Ruff/mypy subset/pytest, and strict local perf regression checks (`cpu` + available `cuda`/`metal`).
 - Optionally block local direct pushes from `main` by setting `RFX_BLOCK_MAIN_PUSH=1`.
+- Local perf hook baselines are stored under `.rfx/perf-baselines/`.
 
 Run all local gates manually:
 
 ```bash
 ./.venv/bin/pre-commit run --all-files --hook-stage pre-push
+```
+
+Refresh perf baseline files when needed:
+
+```bash
+bash scripts/perf-baseline.sh --backend all
 ```
 
 ## CI

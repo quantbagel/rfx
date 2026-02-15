@@ -1,11 +1,14 @@
 # Performance Workflow
 
-`rfxJIT` perf tracking uses one benchmark schema and one soft regression gate.
+`rfxJIT` perf tracking uses one benchmark schema and local regression gates.
 
 ## Baselines
 
-- CPU baseline: `docs/perf/baselines/rfxjit_microkernels_cpu.json`
-- Initial target: affine+relu phase0/2 microkernel benchmark (`rfxJIT/runtime/benchmark.py`)
+- CI baseline: `docs/perf/baselines/rfxjit_microkernels_cpu.json`
+- Optional GPU baselines:
+  - `docs/perf/baselines/rfxjit_microkernels_cuda.json`
+  - `docs/perf/baselines/rfxjit_microkernels_metal.json`
+- Initial target kernel: affine+relu phase0/2 microkernel benchmark (`rfxJIT/runtime/benchmark.py`)
 
 ## Run Locally
 
@@ -30,7 +33,7 @@ bash scripts/perf-check.sh \
   --threshold-pct 10
 ```
 
-Fail on regression (for strict local checks):
+Fail on regression (strict mode):
 
 ```bash
 bash scripts/perf-check.sh \
@@ -38,6 +41,28 @@ bash scripts/perf-check.sh \
   --backend cpu \
   --threshold-pct 10 \
   --fail-on-regression
+```
+
+## Hook-Driven Guard (Default)
+
+`pre-push` runs a strict local perf gate:
+
+- always checks `cpu`
+- checks `cuda` and `metal` when available on your machine
+- blocks push on regressions over threshold (default `10%`)
+- stores local per-machine baselines in `.rfx/perf-baselines/`
+- bootstraps missing local baselines automatically on first run
+
+Manual run:
+
+```bash
+bash scripts/perf-gate.sh
+```
+
+Tune locally with env vars:
+
+```bash
+RFX_PERF_ITERATIONS=100 RFX_PERF_THRESHOLD_PCT=12 bash scripts/perf-gate.sh
 ```
 
 ## Baseline Refresh Policy
@@ -51,5 +76,7 @@ Refresh CPU baseline when any of these change:
 Suggested update flow:
 
 1. Run benchmark on a quiet machine.
-2. Replace `docs/perf/baselines/rfxjit_microkernels_cpu.json`.
+2. Refresh baseline file(s):
+   - CI/repo baseline: `bash scripts/perf-baseline.sh --backend cpu --output-dir docs/perf/baselines`
+   - local hook baseline(s): `bash scripts/perf-baseline.sh --backend all --output-dir .rfx/perf-baselines`
 3. Commit with message like `perf: refresh cpu microkernel baseline`.
