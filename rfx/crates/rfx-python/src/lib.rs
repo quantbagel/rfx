@@ -87,6 +87,11 @@ fn _rfx(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyStream>()?;
     m.add_function(wrap_pyfunction!(bindings::stream_from_receiver, m)?)?;
 
+    // Transport types
+    m.add_class::<PyTransportEnvelope>()?;
+    m.add_class::<PyTransportSubscription>()?;
+    m.add_class::<PyTransport>()?;
+
     Ok(())
 }
 

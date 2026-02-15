@@ -6,7 +6,9 @@
 mod channel;
 mod stream;
 mod topic;
+mod transport;
 
 pub use channel::{bounded_channel, unbounded_channel, Channel, Receiver, Sender};
 pub use stream::{Stream, StreamConfig, StreamHandle};
 pub use topic::{Topic, TopicConfig};
+pub use transport::{InprocTransport, TransportBackend, TransportEnvelope, TransportSubscription};

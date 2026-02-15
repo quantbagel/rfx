@@ -35,7 +35,7 @@ pub mod neural;
 pub mod sim;
 
 // Re-exports for convenience
-pub use comm::{Channel, Stream, Topic};
+pub use comm::{Channel, InprocTransport, Stream, Topic, TransportBackend};
 pub use control::{ControlLoop, ControlLoopHandle, Pid, PidConfig};
 pub use hardware::{Command, Robot, RobotState, Simulator};
 pub use math::{Filter, LowPassFilter, Quaternion, Transform};

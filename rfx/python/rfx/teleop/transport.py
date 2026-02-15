@@ -7,12 +7,20 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
+import json
 import threading
 import time
 from typing import Any
 
 
 _BYTES_LIKE = (bytes, bytearray, memoryview)
+
+try:
+    from rfx._rfx import (
+        Transport as _RustTransport,
+    )
+except Exception:  # pragma: no cover - optional native extension path
+    _RustTransport = None
 
 
 @dataclass(frozen=True)
@@ -119,3 +127,107 @@ class InprocTransport:
                 sub.push(envelope)
 
         return envelope
+
+
+class RustSubscription:
+    """Python adapter around the native Rust `TransportSubscription`."""
+
+    def __init__(self, inner: Any):
+        self._inner = inner
+        self.pattern = inner.pattern
+
+    @property
+    def id(self) -> int:
+        return int(self._inner.id)
+
+    def recv(self, timeout_s: float | None = None) -> TransportEnvelope | None:
+        if timeout_s is None:
+            env = self._inner.recv()
+        else:
+            env = self._inner.recv_timeout(timeout_s)
+        return _from_rust_envelope(env)
+
+    def try_recv(self) -> TransportEnvelope | None:
+        return _from_rust_envelope(self._inner.try_recv())
+
+    def __len__(self) -> int:
+        return len(self._inner)
+
+    def is_empty(self) -> bool:
+        return self._inner.is_empty()
+
+
+class RustTransport:
+    """
+    Native Rust-backed keyed transport with the same API shape as `InprocTransport`.
+    """
+
+    def __init__(self) -> None:
+        if _RustTransport is None:
+            raise RuntimeError(
+                "Rust transport bindings are unavailable. Build extension with maturin develop."
+            )
+        self._inner = _RustTransport()
+
+    def subscribe(self, pattern: str, capacity: int = 1024) -> RustSubscription:
+        return RustSubscription(self._inner.subscribe(pattern, capacity))
+
+    def unsubscribe(self, sub: RustSubscription | int) -> bool:
+        if isinstance(sub, RustSubscription):
+            return bool(self._inner.unsubscribe(sub.id))
+        return bool(self._inner.unsubscribe(int(sub)))
+
+    def publish(
+        self,
+        key: str,
+        payload: Any,
+        *,
+        metadata: dict[str, Any] | None = None,
+        timestamp_ns: int | None = None,
+    ) -> TransportEnvelope:
+        if timestamp_ns is not None:
+            # Native Rust transport stamps wall-time itself.
+            # Caller-provided timestamp is currently tracked in metadata.
+            metadata = dict(metadata or {})
+            metadata["_timestamp_ns"] = int(timestamp_ns)
+
+        payload_bytes = _normalize_payload_bytes(payload)
+        metadata_json = json.dumps(metadata, sort_keys=True) if metadata else None
+        env = self._inner.publish(key, payload_bytes, metadata_json)
+        return _from_rust_envelope(env)
+
+    @property
+    def subscriber_count(self) -> int:
+        return int(self._inner.subscriber_count)
+
+
+def _normalize_payload_bytes(payload: Any) -> bytes:
+    if isinstance(payload, memoryview):
+        return payload.tobytes()
+    if isinstance(payload, (bytes, bytearray)):
+        return bytes(payload)
+    if isinstance(payload, str):
+        return payload.encode("utf-8")
+    if payload is None:
+        return b""
+    return json.dumps(payload, sort_keys=True).encode("utf-8")
+
+
+def _from_rust_envelope(env: Any) -> TransportEnvelope | None:
+    if env is None:
+        return None
+    metadata: dict[str, Any]
+    if env.metadata_json:
+        try:
+            metadata = json.loads(env.metadata_json)
+        except Exception:
+            metadata = {"_raw_metadata_json": env.metadata_json}
+    else:
+        metadata = {}
+    return TransportEnvelope(
+        key=env.key,
+        sequence=int(env.sequence),
+        timestamp_ns=int(env.timestamp_ns),
+        payload=memoryview(bytes(env.payload)),
+        metadata=metadata,
+    )

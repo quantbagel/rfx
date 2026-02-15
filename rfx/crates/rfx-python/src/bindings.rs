@@ -4,6 +4,7 @@
 
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 use std::sync::Arc;
 
 // ============================================================================
@@ -1615,5 +1616,167 @@ pub fn stream_from_receiver(receiver: &PyReceiver) -> PyStream {
     let rx = receiver.inner.clone();
     PyStream {
         inner: rfx_core::comm::Stream::from_receiver(rx),
+    }
+}
+
+// ============================================================================
+// Transport Bindings
+// ============================================================================
+
+/// A keyed transport envelope.
+#[pyclass(name = "TransportEnvelope")]
+#[derive(Clone)]
+pub struct PyTransportEnvelope {
+    inner: rfx_core::comm::TransportEnvelope,
+}
+
+#[pymethods]
+impl PyTransportEnvelope {
+    #[getter]
+    fn key(&self) -> String {
+        self.inner.key.to_string()
+    }
+
+    #[getter]
+    fn sequence(&self) -> u64 {
+        self.inner.sequence
+    }
+
+    #[getter]
+    fn timestamp_ns(&self) -> u64 {
+        self.inner.timestamp_ns
+    }
+
+    #[getter]
+    fn metadata_json(&self) -> Option<String> {
+        self.inner.metadata_json.as_ref().map(|v| v.to_string())
+    }
+
+    #[getter]
+    fn payload<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, self.inner.payload.as_ref())
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "TransportEnvelope(key='{}', sequence={}, bytes={})",
+            self.inner.key,
+            self.inner.sequence,
+            self.inner.payload.len()
+        )
+    }
+}
+
+/// Subscription handle for keyed transport streams.
+#[pyclass(name = "TransportSubscription")]
+pub struct PyTransportSubscription {
+    inner: rfx_core::comm::TransportSubscription,
+}
+
+#[pymethods]
+impl PyTransportSubscription {
+    #[getter]
+    fn id(&self) -> u64 {
+        self.inner.id()
+    }
+
+    #[getter]
+    fn pattern(&self) -> String {
+        self.inner.pattern().to_string()
+    }
+
+    fn recv(&self, py: Python<'_>) -> Option<PyTransportEnvelope> {
+        py.allow_threads(|| self.inner.recv())
+            .map(|env| PyTransportEnvelope { inner: env })
+    }
+
+    fn recv_timeout(&self, py: Python<'_>, timeout_secs: f64) -> Option<PyTransportEnvelope> {
+        let timeout = std::time::Duration::from_secs_f64(timeout_secs);
+        py.allow_threads(|| self.inner.recv_timeout(timeout))
+            .map(|env| PyTransportEnvelope { inner: env })
+    }
+
+    fn try_recv(&self) -> Option<PyTransportEnvelope> {
+        self.inner
+            .try_recv()
+            .map(|env| PyTransportEnvelope { inner: env })
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    fn __len__(&self) -> usize {
+        self.inner.len()
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "TransportSubscription(id={}, pattern='{}', queued={})",
+            self.inner.id(),
+            self.inner.pattern(),
+            self.inner.len()
+        )
+    }
+}
+
+/// In-process keyed transport backend.
+#[pyclass(name = "Transport")]
+pub struct PyTransport {
+    inner: Arc<rfx_core::comm::InprocTransport>,
+}
+
+#[pymethods]
+impl PyTransport {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: Arc::new(rfx_core::comm::InprocTransport::new()),
+        }
+    }
+
+    #[pyo3(signature = (key, payload, metadata_json = None))]
+    fn publish(
+        &self,
+        key: &str,
+        payload: Vec<u8>,
+        metadata_json: Option<String>,
+    ) -> PyTransportEnvelope {
+        let payload_arc = Arc::<[u8]>::from(payload.into_boxed_slice());
+        let metadata_arc = metadata_json.map(|value| Arc::<str>::from(value.into_boxed_str()));
+        let env = rfx_core::comm::TransportBackend::publish(
+            self.inner.as_ref(),
+            key,
+            payload_arc,
+            metadata_arc,
+        );
+        PyTransportEnvelope { inner: env }
+    }
+
+    #[pyo3(signature = (pattern, capacity = 1024))]
+    fn subscribe(&self, pattern: &str, capacity: usize) -> PyTransportSubscription {
+        let sub =
+            rfx_core::comm::TransportBackend::subscribe(self.inner.as_ref(), pattern, capacity);
+        PyTransportSubscription { inner: sub }
+    }
+
+    fn unsubscribe(&self, subscription_id: u64) -> bool {
+        rfx_core::comm::TransportBackend::unsubscribe(self.inner.as_ref(), subscription_id)
+    }
+
+    fn unsubscribe_sub(&self, subscription: &PyTransportSubscription) -> bool {
+        rfx_core::comm::TransportBackend::unsubscribe(self.inner.as_ref(), subscription.inner.id())
+    }
+
+    #[getter]
+    fn subscriber_count(&self) -> usize {
+        rfx_core::comm::TransportBackend::subscription_count(self.inner.as_ref())
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "Transport(subscribers={})",
+            rfx_core::comm::TransportBackend::subscription_count(self.inner.as_ref())
+        )
     }
 }
