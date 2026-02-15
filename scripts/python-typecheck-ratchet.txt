@@ -1,0 +1,16 @@
+# Additional files that currently pass mypy with the baseline flags.
+# Expand this list over time until typecheck-full can become the default gate.
+rfx/python/rfx/config.py
+rfx/python/rfx/decorators.py
+rfx/python/rfx/jit.py
+rfx/python/rfx/skills.py
+rfx/python/rfx/robot.py
+rfx/python/rfx/teleop/__init__.py
+rfx/python/rfx/teleop/benchmark.py
+rfx/python/rfx/teleop/config.py
+rfx/python/rfx/teleop/lerobot_writer.py
+rfx/python/rfx/sim/genesis.py
+rfx/python/rfx/sim/__init__.py
+rfx/python/rfx/sim/mjx.py
+rfx/python/rfx/sim/mock.py
+rfx/python/rfx/real/__init__.py

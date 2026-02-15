@@ -4,8 +4,8 @@ rfx.teleop.benchmark - Jitter benchmark helpers for control-loop acceptance gate
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 
 from .config import TeleopSessionConfig
 from .session import BimanualSo101Session, LoopTimingStats

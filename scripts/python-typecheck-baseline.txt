@@ -1,0 +1,4 @@
+# Baseline mypy targets kept intentionally small for fast feedback.
+rfx/python/rfx/observation.py
+rfx/python/rfx/utils/padding.py
+rfx/python/rfx/utils/transforms.py

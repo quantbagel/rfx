@@ -6,7 +6,7 @@ Requires: pip install genesis-world
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, cast
 
 import torch
 
@@ -72,11 +72,14 @@ class GenesisBackend:
         positions = self._robot.get_dofs_position()
         velocities = self._robot.get_dofs_velocity()
         state = torch.cat([positions, velocities], dim=-1)
-        return make_observation(
-            state=state,
-            state_dim=self.config.state_dim,
-            max_state_dim=self.config.max_state_dim,
-            device=self.device,
+        return cast(
+            Dict[str, torch.Tensor],
+            make_observation(
+                state=state,
+                state_dim=self.config.state_dim,
+                max_state_dim=self.config.max_state_dim,
+                device=self.device,
+            ),
         )
 
     def act(self, action: torch.Tensor) -> None:

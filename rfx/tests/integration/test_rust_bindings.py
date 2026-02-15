@@ -1,15 +1,18 @@
-"""Integration tests for pi Rust bindings.
+"""Integration tests for rfx Rust bindings.
 
 These tests require the Rust extension to be built and installed.
 They verify that the Python bindings work correctly with the Rust core.
 """
 
 import math
-import pytest
-from typing import Tuple
+import sys
 
-# Skip all tests if the Rust extension is not available
-pytest.importorskip("_pi", reason="Rust extension not built")
+import pytest
+
+# Skip all tests if the Rust extension is not available.
+# Keep a legacy "_pi" alias so existing test imports continue to work.
+_pi = pytest.importorskip("rfx._rfx", reason="Rust extension not built")
+sys.modules.setdefault("_pi", _pi)
 
 
 class TestQuaternion:
@@ -116,7 +119,7 @@ class TestTransform:
 
         t = Transform.identity()
 
-        assert t.position == (0.0, 0.0, 0.0)
+        assert tuple(t.position) == pytest.approx((0.0, 0.0, 0.0))
         assert t.x == 0.0
         assert t.y == 0.0
         assert t.z == 0.0
@@ -230,7 +233,8 @@ class TestLowPassFilter:
         result1 = lpf.update(10.0)
         result2 = lpf.update(10.0)
 
-        assert result2 == pytest.approx(10.0, abs=0.1)
+        assert result1 == pytest.approx(5.0, abs=1e-6)
+        assert result2 == pytest.approx(7.5, abs=1e-6)
 
     def test_reset(self) -> None:
         """Test filter reset."""
@@ -360,7 +364,7 @@ class TestPidConfig:
 
     def test_with_limits(self) -> None:
         """Test adding limits."""
-        from _pi import PidConfig, Pid
+        from _pi import Pid, PidConfig
 
         config = PidConfig(kp=100.0).with_limits(-10.0, 10.0)
         pid = Pid(config)
@@ -590,7 +594,7 @@ class TestVersion:
 
     def test_version_exists(self) -> None:
         """Test that version info is available."""
-        from _pi import __version__, VERSION
+        from _pi import VERSION, __version__
 
         assert isinstance(__version__, str)
         assert isinstance(VERSION, str)

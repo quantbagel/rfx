@@ -6,7 +6,7 @@ Requires: pip install mujoco mjx jax[cuda]
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, cast
 
 import torch
 
@@ -96,11 +96,14 @@ class MjxBackend:
         qpos = self._jax_to_torch(self._batched_data.qpos)
         qvel = self._jax_to_torch(self._batched_data.qvel)
         state = torch.cat([qpos, qvel], dim=-1)
-        return make_observation(
-            state=state,
-            state_dim=self.config.state_dim,
-            max_state_dim=self.config.max_state_dim,
-            device=self.device,
+        return cast(
+            Dict[str, torch.Tensor],
+            make_observation(
+                state=state,
+                state_dim=self.config.state_dim,
+                max_state_dim=self.config.max_state_dim,
+                device=self.device,
+            ),
         )
 
     def act(self, action: torch.Tensor) -> None:

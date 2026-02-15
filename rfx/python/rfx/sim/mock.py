@@ -4,7 +4,7 @@ rfx.sim.mock - Mock simulation backend for testing
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, cast
 
 import torch
 
@@ -40,11 +40,14 @@ class MockBackend:
 
     def observe(self) -> Dict[str, torch.Tensor]:
         state = torch.cat([self._positions, self._velocities], dim=-1)
-        return make_observation(
-            state=state,
-            state_dim=self.config.state_dim,
-            max_state_dim=self.config.max_state_dim,
-            device=self.device,
+        return cast(
+            Dict[str, torch.Tensor],
+            make_observation(
+                state=state,
+                state_dim=self.config.state_dim,
+                max_state_dim=self.config.max_state_dim,
+                device=self.device,
+            ),
         )
 
     def act(self, action: torch.Tensor) -> None:

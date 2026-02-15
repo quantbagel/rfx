@@ -1,7 +1,8 @@
 """Pytest configuration and shared fixtures."""
 
+from collections.abc import Callable
+
 import pytest
-from typing import Any, Callable
 
 
 @pytest.fixture

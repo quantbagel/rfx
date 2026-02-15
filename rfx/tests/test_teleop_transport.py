@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from rfx.teleop import InprocTransport, TransportConfig
 import rfx.teleop.transport as transport_mod
+from rfx.teleop import InprocTransport, TransportConfig
 
 
 def test_publish_subscribe_with_key_patterns() -> None:

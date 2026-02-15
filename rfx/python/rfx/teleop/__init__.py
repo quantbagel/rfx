@@ -2,6 +2,7 @@
 rfx.teleop - Python-first teleoperation API.
 """
 
+from .benchmark import JitterBenchmarkResult, assert_jitter_budget, run_jitter_benchmark
 from .config import (
     ArmPairConfig,
     CameraStreamConfig,
@@ -9,7 +10,6 @@ from .config import (
     TeleopSessionConfig,
     TransportConfig,
 )
-from .benchmark import JitterBenchmarkResult, assert_jitter_budget, run_jitter_benchmark
 from .lerobot_writer import LeRobotExportConfig, LeRobotPackageWriter
 from .recorder import LeRobotRecorder, RecordedEpisode
 from .session import BimanualSo101Session, LoopTimingStats

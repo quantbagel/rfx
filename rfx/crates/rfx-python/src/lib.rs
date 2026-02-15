@@ -110,7 +110,7 @@ fn motor_index_by_name(name: &str) -> PyResult<Option<usize>> {
 fn run_control_loop(
     py: Python<'_>,
     rate_hz: f64,
-    callback: PyObject,
+    callback: Py<PyAny>,
     name: Option<&str>,
     max_iterations: Option<u64>,
 ) -> PyResult<PyControlLoopStats> {
@@ -121,7 +121,7 @@ fn run_control_loop(
     let callback_clone = callback.clone_ref(py);
 
     // Run the control loop, releasing GIL during sleep periods
-    let stats = py.allow_threads(|| {
+    let stats = py.detach(|| {
         rfx_core::control::ControlLoop::run(config, move |iter, dt| {
             // Check max iterations outside GIL
             if let Some(max) = max_iterations {
@@ -131,7 +131,7 @@ fn run_control_loop(
             }
 
             // Acquire GIL only when calling Python callback
-            Python::with_gil(|py| match callback_clone.call1(py, (iter, dt)) {
+            Python::attach(|py| match callback_clone.call1(py, (iter, dt)) {
                 Ok(result) => result.is_truthy(py).unwrap_or(false),
                 Err(e) => {
                     e.print(py);

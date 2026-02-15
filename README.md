@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img alt="rfx logo" src="docs/assets/logo.png" width="180" style="border-radius: 20px;" />](https://github.com/quantbagel/rfx)
+[<img alt="rfx logo" src="docs/assets/logo.svg" width="220" />](https://github.com/quantbagel/rfx)
 
 rfx: A ground-up replacement for ROS, built for the foundation model era.
 

@@ -80,7 +80,7 @@ class RobotConfig:
 
     @classmethod
     def from_yaml(cls, path: Union[str, Path]) -> "RobotConfig":
-        import yaml
+        import yaml  # type: ignore[import-untyped]
 
         path = Path(path)
         if not path.exists():

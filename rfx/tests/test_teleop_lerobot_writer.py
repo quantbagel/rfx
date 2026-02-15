@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import numpy as np
 
@@ -17,7 +17,7 @@ from rfx.teleop import (
 
 
 class _FakeLeRobotDataset:
-    created: "_FakeLeRobotDataset | None" = None
+    created: _FakeLeRobotDataset | None = None
 
     def __init__(self) -> None:
         self.frames: list[tuple[dict[str, object], str | None]] = []

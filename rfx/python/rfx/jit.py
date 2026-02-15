@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -45,7 +45,7 @@ def available_backends() -> dict[str, bool]:
     try:
         from rfxJIT.runtime.executor import available_backends as _available_backends
 
-        return _available_backends()
+        return cast(dict[str, bool], _available_backends())
     except Exception:
         return {"cpu": True, "cuda": False, "metal": False}
 

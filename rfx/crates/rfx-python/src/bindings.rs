@@ -1015,7 +1015,7 @@ impl PySo101 {
     /// Connect to an SO-101 arm
     #[staticmethod]
     fn connect(py: Python<'_>, config: PySo101Config) -> PyResult<Self> {
-        let result = py.allow_threads(|| rfx_core::hardware::so101::So101::connect(config.inner));
+        let result = py.detach(|| rfx_core::hardware::so101::So101::connect(config.inner));
 
         match result {
             Ok(arm) => Ok(Self {
@@ -1039,30 +1039,30 @@ impl PySo101 {
 
     /// Read current positions (direct read)
     fn read_positions(&self, py: Python<'_>) -> Vec<f32> {
-        py.allow_threads(|| self.inner.lock().read_positions().to_vec())
+        py.detach(|| self.inner.lock().read_positions().to_vec())
     }
 
     /// Set target positions for all joints
     fn set_positions(&self, py: Python<'_>, positions: Vec<f32>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.lock().set_positions(&positions))
+        py.detach(|| self.inner.lock().set_positions(&positions))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
     /// Enable or disable torque
     fn set_torque_enable(&self, py: Python<'_>, enabled: bool) -> PyResult<()> {
-        py.allow_threads(|| self.inner.lock().set_torque_enable(enabled))
+        py.detach(|| self.inner.lock().set_torque_enable(enabled))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
     /// Move to home position
     fn go_home(&self, py: Python<'_>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.lock().go_home())
+        py.detach(|| self.inner.lock().go_home())
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
     /// Disconnect from the arm
     fn disconnect(&self, py: Python<'_>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.lock().disconnect())
+        py.detach(|| self.inner.lock().disconnect())
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1088,7 +1088,7 @@ impl PyGo2 {
         };
 
         // Release GIL during connection
-        let result = py.allow_threads(|| rfx_core::hardware::go2::Go2::connect(cfg));
+        let result = py.detach(|| rfx_core::hardware::go2::Go2::connect(cfg));
 
         match result {
             Ok(go2) => Ok(Self {
@@ -1105,7 +1105,7 @@ impl PyGo2 {
 
     /// Disconnect from the robot
     fn disconnect(&self, py: Python<'_>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.disconnect())
+        py.detach(|| self.inner.disconnect())
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1118,19 +1118,19 @@ impl PyGo2 {
 
     /// Walk with given velocities
     fn walk(&self, py: Python<'_>, vx: f32, vy: f32, vyaw: f32) -> PyResult<()> {
-        py.allow_threads(|| self.inner.walk(vx, vy, vyaw))
+        py.detach(|| self.inner.walk(vx, vy, vyaw))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
     /// Stand
     fn stand(&self, py: Python<'_>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.stand())
+        py.detach(|| self.inner.stand())
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
     /// Sit
     fn sit(&self, py: Python<'_>) -> PyResult<()> {
-        py.allow_threads(|| self.inner.sit())
+        py.detach(|| self.inner.sit())
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1143,7 +1143,7 @@ impl PyGo2 {
         kp: f32,
         kd: f32,
     ) -> PyResult<()> {
-        py.allow_threads(|| self.inner.set_motor_position(motor_idx, position, kp, kd))
+        py.detach(|| self.inner.set_motor_position(motor_idx, position, kp, kd))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1155,7 +1155,7 @@ impl PyGo2 {
         kp: f32,
         kd: f32,
     ) -> PyResult<()> {
-        py.allow_threads(|| self.inner.set_motor_positions(&positions, kp, kd))
+        py.detach(|| self.inner.set_motor_positions(&positions, kp, kd))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1500,7 +1500,7 @@ pub struct PyReceiver {
 impl PyReceiver {
     /// Receive a message, blocking until one is available
     fn recv(&self, py: Python<'_>) -> PyResult<String> {
-        py.allow_threads(|| self.inner.recv())
+        py.detach(|| self.inner.recv())
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1514,7 +1514,7 @@ impl PyReceiver {
     /// Receive with a timeout in seconds
     fn recv_timeout(&self, py: Python<'_>, timeout_secs: f64) -> PyResult<Option<String>> {
         let timeout = std::time::Duration::from_secs_f64(timeout_secs);
-        py.allow_threads(|| self.inner.recv_timeout(timeout))
+        py.detach(|| self.inner.recv_timeout(timeout))
             .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
@@ -1575,13 +1575,13 @@ pub struct PyStream {
 impl PyStream {
     /// Receive the next value
     fn next(&self, py: Python<'_>) -> Option<String> {
-        py.allow_threads(|| self.inner.next())
+        py.detach(|| self.inner.next())
     }
 
     /// Receive the next value with a timeout in seconds
     fn next_timeout(&self, py: Python<'_>, timeout_secs: f64) -> Option<String> {
         let timeout = std::time::Duration::from_secs_f64(timeout_secs);
-        py.allow_threads(|| self.inner.next_timeout(timeout))
+        py.detach(|| self.inner.next_timeout(timeout))
     }
 
     /// Try to receive without blocking
@@ -1686,13 +1686,13 @@ impl PyTransportSubscription {
     }
 
     fn recv(&self, py: Python<'_>) -> Option<PyTransportEnvelope> {
-        py.allow_threads(|| self.inner.recv())
+        py.detach(|| self.inner.recv())
             .map(|env| PyTransportEnvelope { inner: env })
     }
 
     fn recv_timeout(&self, py: Python<'_>, timeout_secs: f64) -> Option<PyTransportEnvelope> {
         let timeout = std::time::Duration::from_secs_f64(timeout_secs);
-        py.allow_threads(|| self.inner.recv_timeout(timeout))
+        py.detach(|| self.inner.recv_timeout(timeout))
             .map(|env| PyTransportEnvelope { inner: env })
     }
 

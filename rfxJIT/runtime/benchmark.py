@@ -6,7 +6,7 @@ import argparse
 import json
 import platform
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -163,7 +163,7 @@ def build_benchmark_report(
         "schema_version": 1,
         "name": "rfxjit_affine_relu_phase02",
         "metadata": {
-            "timestamp_utc": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
+            "timestamp_utc": datetime.now(tz=UTC).isoformat().replace("+00:00", "Z"),
             "platform": platform.platform(),
             "machine": platform.machine(),
             "python_version": platform.python_version(),

@@ -1,9 +1,10 @@
 """Tests for rfx.decorators module."""
 
-import pytest
 from typing import Any
 
-from rfx.decorators import control_loop, policy, MotorCommands
+import pytest
+
+from rfx.decorators import MotorCommands, control_loop, policy
 
 
 class TestControlLoopDecorator:

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 120" width="288" height="120" aria-label="rfx" role="img">
+  <!-- R -->
+  <rect x="0" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="24" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="48" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="0" y="24" width="24" height="24" fill="#ffffff"/>
+  <rect x="48" y="24" width="24" height="24" fill="#ffffff"/>
+  <rect x="0" y="48" width="24" height="24" fill="#ffffff"/>
+  <rect x="24" y="48" width="24" height="24" fill="#ffffff"/>
+  <rect x="0" y="72" width="24" height="24" fill="#ffffff"/>
+  <rect x="48" y="72" width="24" height="24" fill="#ffffff"/>
+  <rect x="0" y="96" width="24" height="24" fill="#ffffff"/>
+  <rect x="48" y="96" width="24" height="24" fill="#ffffff"/>
+  <!-- F -->
+  <rect x="108" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="132" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="156" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="108" y="24" width="24" height="24" fill="#ffffff"/>
+  <rect x="108" y="48" width="24" height="24" fill="#ffffff"/>
+  <rect x="132" y="48" width="24" height="24" fill="#ffffff"/>
+  <rect x="108" y="72" width="24" height="24" fill="#ffffff"/>
+  <rect x="108" y="96" width="24" height="24" fill="#ffffff"/>
+  <!-- X -->
+  <rect x="216" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="264" y="0" width="24" height="24" fill="#ffffff"/>
+  <rect x="216" y="24" width="24" height="24" fill="#ffffff"/>
+  <rect x="264" y="24" width="24" height="24" fill="#ffffff"/>
+  <rect x="240" y="48" width="24" height="24" fill="#ffffff"/>
+  <rect x="216" y="72" width="24" height="24" fill="#ffffff"/>
+  <rect x="264" y="72" width="24" height="24" fill="#ffffff"/>
+  <rect x="216" y="96" width="24" height="24" fill="#ffffff"/>
+  <rect x="264" y="96" width="24" height="24" fill="#ffffff"/>
+</svg>

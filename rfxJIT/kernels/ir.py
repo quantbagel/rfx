@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class DType(str, Enum):
+class DType(StrEnum):
     """Supported scalar dtypes for phase 0."""
 
     F32 = "float32"
     F64 = "float64"
 
 
-class OpCode(str, Enum):
+class OpCode(StrEnum):
     """IR ops supported by the phase 0 interpreter."""
 
     ADD = "add"

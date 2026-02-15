@@ -16,7 +16,7 @@ repository = "https://github.com/quantbagel/rfx"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"] }
 
 # Python bindings
-pyo3 = { version = "0.24", features = ["extension-module"] }
+pyo3 = { version = "0.28", features = ["extension-module"] }
 
 # Serialization
 serde = { version = "1", features = ["derive"] }

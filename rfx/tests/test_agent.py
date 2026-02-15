@@ -1,11 +1,12 @@
 """Tests for rfx.agent module."""
 
-import pytest
-from typing import Any, Callable
+from collections.abc import Callable
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from rfx.agent import Agent, AgentConfig, MockAgent
-from rfx.skills import skill, Skill
+from rfx.skills import Skill, skill
 
 
 class TestAgentConfig:

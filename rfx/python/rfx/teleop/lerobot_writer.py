@@ -4,11 +4,11 @@ rfx.teleop.lerobot_writer - Direct LeRobot package export.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import importlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 
@@ -171,7 +171,7 @@ def _dataset_save_episode(dataset: Any) -> None:
 
 def _load_json(path: Path) -> dict[str, Any]:
     with open(path, encoding="utf-8") as handle:
-        return json.load(handle)
+        return cast(dict[str, Any], json.load(handle))
 
 
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:

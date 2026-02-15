@@ -6,8 +6,8 @@ from collections.abc import Mapping
 
 import numpy as np
 
-from rfxJIT.runtime.core_exec import coerce_named_inputs, execute_numpy_op
 from rfxJIT.kernels.ir import KernelIR, OpCode
+from rfxJIT.runtime.core_exec import coerce_named_inputs, execute_numpy_op
 
 
 def execute_kernel(kernel: KernelIR, named_inputs: Mapping[str, np.ndarray]) -> np.ndarray:

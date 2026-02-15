@@ -424,7 +424,10 @@ class SkillRegistry:
         if isinstance(skill_or_func, Skill):
             s = skill_or_func
         else:
-            s = skill(skill_or_func, **kwargs)
+            resolved = skill(skill_or_func, **kwargs)
+            if not isinstance(resolved, Skill):
+                raise TypeError("register() expected a Skill when called with a function")
+            s = resolved
 
         self._skills[s.name] = s
         return s

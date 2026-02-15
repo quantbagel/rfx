@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, is_dataclass
 from pathlib import Path
-from typing import Any, Mapping, Literal
+from typing import Any, Mapping, Literal, cast
 
 
 TransportBackend = Literal["inproc", "zenoh", "dds"]
@@ -141,8 +141,8 @@ def to_serializable(value: Any) -> Any:
     """Convert dataclasses and Paths into JSON-serializable values."""
     if isinstance(value, Path):
         return str(value)
-    if is_dataclass(value):
-        return to_serializable(asdict(value))
+    if is_dataclass(value) and not isinstance(value, type):
+        return to_serializable(asdict(cast(Any, value)))
     if isinstance(value, Mapping):
         return {str(k): to_serializable(v) for k, v in value.items()}
     if isinstance(value, tuple):
