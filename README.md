@@ -6,14 +6,13 @@ rfx: For something between PyTorch and a robotics runtime stack.
 
 <h3>
 
-[Homepage](https://github.com/quantbagel/rfx) | [Documentation](docs/README.md) | [Discord](https://discord.gg/xV8bAGM8WT) | [X](https://x.com/quantbagel)
+[Homepage](https://github.com/quantbagel/rfx) | [Documentation](https://deepwiki.com/quantbagel/rfx) | [Discord](https://discord.gg/xV8bAGM8WT)
 
 </h3>
 
 [![CI](https://github.com/quantbagel/rfx/actions/workflows/ci.yml/badge.svg)](https://github.com/quantbagel/rfx/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![Follow on X](https://img.shields.io/badge/Follow-%40quantbagel-000000?logo=x&logoColor=white)](https://x.com/quantbagel)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/xV8bAGM8WT)
 
 </div>
