@@ -107,6 +107,35 @@ except ModuleNotFoundError:
     sim = None
     real = None
 
+try:
+    from .teleop import (
+        ArmPairConfig,
+        BimanualSo101Session,
+        CameraStreamConfig,
+        JitPolicyConfig,
+        InprocTransport,
+        LeRobotRecorder,
+        LoopTimingStats,
+        RecordedEpisode,
+        Subscription,
+        TeleopSessionConfig,
+        TransportConfig,
+        TransportEnvelope,
+    )
+except ModuleNotFoundError:
+    ArmPairConfig = None
+    BimanualSo101Session = None
+    CameraStreamConfig = None
+    InprocTransport = None
+    JitPolicyConfig = None
+    LeRobotRecorder = None
+    LoopTimingStats = None
+    RecordedEpisode = None
+    Subscription = None
+    TeleopSessionConfig = None
+    TransportConfig = None
+    TransportEnvelope = None
+
 # ============================================================================
 # rfx v1 API (backward compatible)
 # ============================================================================
@@ -142,6 +171,18 @@ __all__ = [
     "real",
     "utils",
     "jit",
+    "ArmPairConfig",
+    "BimanualSo101Session",
+    "CameraStreamConfig",
+    "InprocTransport",
+    "JitPolicyConfig",
+    "LeRobotRecorder",
+    "LoopTimingStats",
+    "RecordedEpisode",
+    "Subscription",
+    "TeleopSessionConfig",
+    "TransportConfig",
+    "TransportEnvelope",
     # v1 API
     "__version__",
     "VERSION",
