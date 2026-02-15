@@ -31,5 +31,5 @@ North star: make `rfxJIT` the default high-performance execution engine for
 ## Phase 3: Integration
 
 - Wire JIT path into selected `rfx` execution points behind feature flags.
-- Add profiling and regression tracking in CI/perf jobs.
+- Add profiling and regression tracking in CI/perf jobs. (CPU soft gate landed)
 - Promote stable components from `rfxJIT` into core modules.

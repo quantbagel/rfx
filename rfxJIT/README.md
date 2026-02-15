@@ -77,5 +77,19 @@ tiny and hackable.
 Run the benchmark:
 
 ```bash
-python -m rfxJIT.runtime.benchmark --size 65536 --iterations 200
+python -m rfxJIT.runtime.benchmark \
+  --size 65536 \
+  --iterations 200 \
+  --backend cpu \
+  --json-out /tmp/rfxjit-current.json
+```
+
+Compare against the tracked CPU baseline:
+
+```bash
+bash scripts/perf-check.sh \
+  --baseline docs/perf/baselines/rfxjit_microkernels_cpu.json \
+  --output /tmp/rfxjit-current.json \
+  --backend cpu \
+  --threshold-pct 10
 ```

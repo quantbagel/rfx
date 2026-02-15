@@ -4,6 +4,7 @@ Top-level layout:
 
 - `rfx/`: production and test source code
 - `docs/`: architecture, workflows, and contributor guides
+  includes perf baselines in `docs/perf/baselines/`
 - `rfxJIT/`: ultra-performance kernel and compiler engine
 - `cli/`: command-line interfaces and helpers
 - `.claude/skills/`: Claude skills used by agents

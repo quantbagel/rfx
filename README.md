@@ -33,6 +33,9 @@ cd rfx
 bash scripts/setup-from-source.sh
 ```
 
+The setup script now probes `rfxJIT` backend availability and prints warnings
+if optional `cuda`/`metal` paths are unavailable.
+
 Manual setup equivalent:
 
 ```bash
@@ -115,6 +118,16 @@ Run all local gates manually:
 
 - Single CI workflow: `.github/workflows/ci.yml`
 - CI runs on pushes to `main` and on pull requests.
+- CI includes a soft `rfxJIT` CPU perf regression check with JSON artifact upload.
+
+Run the same local perf gate:
+
+```bash
+bash scripts/perf-check.sh \
+  --baseline docs/perf/baselines/rfxjit_microkernels_cpu.json \
+  --backend cpu \
+  --threshold-pct 10
+```
 
 ## Moon (Monorepo Task Runner)
 
