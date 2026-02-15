@@ -204,7 +204,7 @@ echo "[perf] current=$ABS_OUTPUT"
 if [[ "$COMPARE_STATUS" -eq 2 ]]; then
   if [[ "$FAIL_ON_REGRESSION" -eq 1 ]]; then
     echo "[perf] failing due to --fail-on-regression" >&2
-    exit 1
+    exit 3
   fi
   echo "[perf] soft warning only; continuing"
   exit 0

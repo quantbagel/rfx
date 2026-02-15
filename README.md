@@ -105,7 +105,7 @@ Dev dependencies are defined in `requirements-dev.txt` for local source installs
 
 What runs:
 - `pre-commit`: `cargo fmt --all -- --check`, then Ruff on staged Python files.
-- `pre-push`: Rust fmt/clippy/tests, Python Ruff/mypy subset/pytest, and strict local perf regression checks (`cpu` + available `cuda`/`metal`).
+- `pre-push`: Rust fmt/clippy/tests, Python Ruff/mypy subset/pytest, and local perf regression checks (`cpu` enforced, `cuda`/`metal` attempted when available).
 - Optionally block local direct pushes from `main` by setting `RFX_BLOCK_MAIN_PUSH=1`.
 - Local perf hook baselines are stored under `.rfx/perf-baselines/`.
 

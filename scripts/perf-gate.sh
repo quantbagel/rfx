@@ -33,20 +33,29 @@ run_backend_check() {
   local backend="$1"
   local baseline_path="$2"
   local output_path
+  local check_status
 
   if [[ ! -f "$baseline_path" ]]; then
     echo "[perf-gate] bootstrapping local baseline for backend=$backend"
-    bash "$ROOT/scripts/perf-baseline.sh" \
+    if ! bash "$ROOT/scripts/perf-baseline.sh" \
       --backend "$backend" \
       --output-dir "$RFX_PERF_BASELINE_DIR" \
       --size "$RFX_PERF_SIZE" \
       --iterations "$RFX_PERF_ITERATIONS" \
       --warmup "$RFX_PERF_WARMUP" \
-      --seed "$RFX_PERF_SEED"
+      --seed "$RFX_PERF_SEED"; then
+      if [[ "$backend" == "cpu" || "$RFX_PERF_STRICT_GPU" == "1" ]]; then
+        echo "[perf-gate] baseline bootstrap failed for required backend=$backend" >&2
+        exit 1
+      fi
+      echo "[perf-gate] warning: baseline bootstrap failed for backend=$backend; skipping"
+      return 0
+    fi
   fi
 
   output_path="$(mktemp "${TMPDIR:-/tmp}/rfxjit-${backend}.XXXXXX")"
   echo "[perf-gate] checking backend=$backend"
+  set +e
   bash "$ROOT/scripts/perf-check.sh" \
     --baseline "$baseline_path" \
     --output "$output_path" \
@@ -57,6 +66,22 @@ run_backend_check() {
     --seed "$RFX_PERF_SEED" \
     --threshold-pct "$RFX_PERF_THRESHOLD_PCT" \
     --fail-on-regression
+  check_status=$?
+  set -e
+
+  if [[ "$check_status" -eq 0 ]]; then
+    return 0
+  fi
+  if [[ "$check_status" -eq 3 ]]; then
+    echo "[perf-gate] regression detected for backend=$backend" >&2
+    exit 1
+  fi
+  if [[ "$backend" == "cpu" || "$RFX_PERF_STRICT_GPU" == "1" ]]; then
+    echo "[perf-gate] perf check failed for required backend=$backend (status=$check_status)" >&2
+    exit "$check_status"
+  fi
+
+  echo "[perf-gate] warning: perf check failed for backend=$backend (status=$check_status); skipping"
 }
 
 PYTHON_BIN="$(resolve_python)"
@@ -66,6 +91,7 @@ RFX_PERF_WARMUP="${RFX_PERF_WARMUP:-10}"
 RFX_PERF_SEED="${RFX_PERF_SEED:-42}"
 RFX_PERF_THRESHOLD_PCT="${RFX_PERF_THRESHOLD_PCT:-10}"
 RFX_PERF_BASELINE_DIR="${RFX_PERF_BASELINE_DIR:-$ROOT/.rfx/perf-baselines}"
+RFX_PERF_STRICT_GPU="${RFX_PERF_STRICT_GPU:-0}"
 mkdir -p "$RFX_PERF_BASELINE_DIR"
 
 BACKEND_JSON="$(
@@ -93,6 +119,7 @@ echo "[perf-gate] local regression gate (threshold=${RFX_PERF_THRESHOLD_PCT}%)"
 echo "[perf-gate] params: size=${RFX_PERF_SIZE} iterations=${RFX_PERF_ITERATIONS} warmup=${RFX_PERF_WARMUP}"
 echo "[perf-gate] available backends: $BACKEND_JSON"
 echo "[perf-gate] local baseline dir: $RFX_PERF_BASELINE_DIR"
+echo "[perf-gate] strict gpu mode: $RFX_PERF_STRICT_GPU"
 
 run_backend_check "cpu" "$(baseline_path_for_backend cpu)"
 

@@ -45,11 +45,12 @@ bash scripts/perf-check.sh \
 
 ## Hook-Driven Guard (Default)
 
-`pre-push` runs a strict local perf gate:
+`pre-push` runs a local perf gate:
 
-- always checks `cpu`
+- always checks `cpu` and blocks push on regressions over threshold (default `10%`)
 - checks `cuda` and `metal` when available on your machine
-- blocks push on regressions over threshold (default `10%`)
+- GPU backend regressions block push when the check runs successfully
+- transient GPU backend runtime failures are warning-only by default
 - stores local per-machine baselines in `.rfx/perf-baselines/`
 - bootstraps missing local baselines automatically on first run
 
@@ -63,6 +64,12 @@ Tune locally with env vars:
 
 ```bash
 RFX_PERF_ITERATIONS=100 RFX_PERF_THRESHOLD_PCT=12 bash scripts/perf-gate.sh
+```
+
+Force GPU backend failures to block push:
+
+```bash
+RFX_PERF_STRICT_GPU=1 bash scripts/perf-gate.sh
 ```
 
 ## Baseline Refresh Policy
