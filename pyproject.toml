@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "rfx-sdk"
-version = "0.1.2"
+version = "0.1.3"
 description = "A tinygrad-inspired robotics framework for Unitree Go2"
 readme = "README.md"
 license = { text = "MIT" }

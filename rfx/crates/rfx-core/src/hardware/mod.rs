@@ -18,10 +18,10 @@ pub use go2::{
 #[cfg(feature = "hardware-so101")]
 pub use so101::{So101, So101Config, So101State};
 
-#[cfg(all(feature = "hardware-go2", feature = "zenoh"))]
-pub use go2::dds::ZenohDdsBackend;
 #[cfg(all(feature = "hardware-go2", feature = "dds-cyclone"))]
 pub use go2::dds::CycloneDdsBackend;
+#[cfg(all(feature = "hardware-go2", feature = "zenoh"))]
+pub use go2::dds::ZenohDdsBackend;
 pub use traits::{Command, Robot, RobotState, Simulator};
 
 /// Motor indices for the Go2 quadruped

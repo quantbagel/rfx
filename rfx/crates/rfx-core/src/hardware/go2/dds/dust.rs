@@ -91,7 +91,11 @@ pub(super) fn monotonic_like_request_id() -> i64 {
         .unwrap_or(0)
 }
 
-pub(super) fn sport_request_to_wire(cmd: &SportModeRequestDds, req_id: i64, no_reply: bool) -> RequestWire {
+pub(super) fn sport_request_to_wire(
+    cmd: &SportModeRequestDds,
+    req_id: i64,
+    no_reply: bool,
+) -> RequestWire {
     let api_id = cmd.header.api_id as i64;
     RequestWire {
         header: RequestHeaderWire {

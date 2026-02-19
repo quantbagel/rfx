@@ -1776,8 +1776,9 @@ impl PyTransport {
             shared_memory,
             key_prefix,
         };
-        let transport = rfx_core::comm::ZenohTransport::new(config)
-            .map_err(|e| PyRuntimeError::new_err(format!("failed to create zenoh transport: {e}")))?;
+        let transport = rfx_core::comm::ZenohTransport::new(config).map_err(|e| {
+            PyRuntimeError::new_err(format!("failed to create zenoh transport: {e}"))
+        })?;
         Ok(Self {
             inner: Arc::new(transport),
         })
@@ -1822,9 +1823,6 @@ impl PyTransport {
     }
 
     fn __repr__(&self) -> String {
-        format!(
-            "Transport(subscribers={})",
-            self.inner.subscription_count()
-        )
+        format!("Transport(subscribers={})", self.inner.subscription_count())
     }
 }

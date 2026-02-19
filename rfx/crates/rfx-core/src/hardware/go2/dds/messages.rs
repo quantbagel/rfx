@@ -216,7 +216,12 @@ impl Default for LowStateDds {
 ///   + foot_force(8) + foot_force_est(8) + tick(4) + wireless_remote(40)
 ///   + bit_flag(1) + aios_state(4) + power_v(2) + reserve(16)
 ///   = 1042
-const STATE_BODY_SIZE: usize = 2 + 1 + 1 + 8 + 8 + 2
+const STATE_BODY_SIZE: usize = 2
+    + 1
+    + 1
+    + 8
+    + 8
+    + 2
     + (4 * 4 + 3 * 4 + 3 * 4 + 3 * 4 + 1)
     + DDS_NUM_MOTORS * (1 + 4 * 7 + 1 + 4 + 4 * 2)
     + (1 + 1 + 1 + 1 + 4 + 2 + 2 + 2 + 2 * 15)

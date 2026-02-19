@@ -39,9 +39,9 @@
 pub mod dds;
 mod types;
 
-pub use dds::{DdsBackend, DustDdsBackend};
 #[cfg(feature = "zenoh")]
 pub use dds::ZenohDdsBackend;
+pub use dds::{DdsBackend, DustDdsBackend};
 pub use types::{
     BmsState, Go2State, ImuState, LowCmd, LowState, MotorCmd, MotorState, RobotMode, SportModeCmd,
     SportModeState,
@@ -235,11 +235,9 @@ impl Go2 {
                     Self::connect_with_backend(config, backend)
                 }
                 #[cfg(not(feature = "zenoh"))]
-                Go2BackendHint::Zenoh => {
-                    Err(Error::Config(
-                        "Zenoh backend requested but 'zenoh' feature not enabled".into(),
-                    ))
-                }
+                Go2BackendHint::Zenoh => Err(Error::Config(
+                    "Zenoh backend requested but 'zenoh' feature not enabled".into(),
+                )),
                 #[cfg(feature = "dds-cyclone")]
                 Go2BackendHint::CycloneDds => {
                     let backend = CycloneDdsBackend::new(&config)?;
@@ -247,11 +245,9 @@ impl Go2 {
                     Self::connect_with_backend(config, backend)
                 }
                 #[cfg(not(feature = "dds-cyclone"))]
-                Go2BackendHint::CycloneDds => {
-                    Err(Error::Config(
-                        "CycloneDDS backend requested but 'dds-cyclone' feature not enabled".into(),
-                    ))
-                }
+                Go2BackendHint::CycloneDds => Err(Error::Config(
+                    "CycloneDDS backend requested but 'dds-cyclone' feature not enabled".into(),
+                )),
                 Go2BackendHint::DustDds => {
                     let backend = DustDdsBackend::new(&config)?;
                     tracing::info!("Using dust-dds backend (explicit)");

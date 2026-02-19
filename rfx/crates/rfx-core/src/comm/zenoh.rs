@@ -84,23 +84,16 @@ impl ZenohTransport {
             let json_array = format!("[{}]", json_endpoints.join(","));
             zenoh_config
                 .insert_json5("connect/endpoints", &json_array)
-                .map_err(|e| {
-                    crate::Error::Config(format!("invalid connect endpoints: {e}"))
-                })?;
+                .map_err(|e| crate::Error::Config(format!("invalid connect endpoints: {e}")))?;
         }
 
         if !config.listen.is_empty() {
-            let json_endpoints: Vec<String> = config
-                .listen
-                .iter()
-                .map(|s| format!("\"{}\"", s))
-                .collect();
+            let json_endpoints: Vec<String> =
+                config.listen.iter().map(|s| format!("\"{}\"", s)).collect();
             let json_array = format!("[{}]", json_endpoints.join(","));
             zenoh_config
                 .insert_json5("listen/endpoints", &json_array)
-                .map_err(|e| {
-                    crate::Error::Config(format!("invalid listen endpoints: {e}"))
-                })?;
+                .map_err(|e| crate::Error::Config(format!("invalid listen endpoints: {e}")))?;
         }
 
         if config.shared_memory {

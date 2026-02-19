@@ -192,10 +192,7 @@ fn zenoh_command_writer(
         // Check for low commands
         if let Ok(Some(cmd)) = low_cmd_rx.recv_timeout(Duration::from_micros(500)) {
             let cdr_bytes = cmd.to_cdr_bytes();
-            if let Err(e) = session
-                .put("rt/lowcmd", ZBytes::from(cdr_bytes))
-                .wait()
-            {
+            if let Err(e) = session.put("rt/lowcmd", ZBytes::from(cdr_bytes)).wait() {
                 tracing::warn!("Failed to publish low cmd via Zenoh: {e}");
             }
         }
@@ -234,8 +231,8 @@ mod tests {
 
     #[test]
     fn test_config_with_zenoh_endpoint() {
-        let config = Go2Config::new("192.168.123.161")
-            .with_zenoh_endpoint("tcp/192.168.123.161:7447");
+        let config =
+            Go2Config::new("192.168.123.161").with_zenoh_endpoint("tcp/192.168.123.161:7447");
 
         assert_eq!(
             config.zenoh_endpoint.as_deref(),
@@ -252,8 +249,7 @@ mod tests {
 
     #[test]
     fn test_config_with_backend() {
-        let config = Go2Config::new("192.168.123.161")
-            .with_backend(Go2BackendHint::Zenoh);
+        let config = Go2Config::new("192.168.123.161").with_backend(Go2BackendHint::Zenoh);
 
         assert_eq!(config.preferred_backend, Some(Go2BackendHint::Zenoh));
     }
@@ -269,8 +265,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_zenoh_dds_state_subscription() {
-        let config =
-            Go2Config::new("192.168.123.161").with_backend(Go2BackendHint::Zenoh);
+        let config = Go2Config::new("192.168.123.161").with_backend(Go2BackendHint::Zenoh);
         let backend = ZenohDdsBackend::new(&config).expect("failed to create backend");
         let state_rx = backend.subscribe_state();
 
@@ -289,8 +284,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_zenoh_dds_sport_command() {
-        let config =
-            Go2Config::new("192.168.123.161").with_backend(Go2BackendHint::Zenoh);
+        let config = Go2Config::new("192.168.123.161").with_backend(Go2BackendHint::Zenoh);
         let backend = ZenohDdsBackend::new(&config).expect("failed to create backend");
 
         let cmd = SportModeCmd::stand();
