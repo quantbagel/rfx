@@ -7,7 +7,8 @@ Provides decorators for defining control loops and tinygrad-based neural policie
 from __future__ import annotations
 
 import functools
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from .jit import PolicyJitRuntime
 
@@ -18,13 +19,16 @@ try:
 
     TINYGRAD_AVAILABLE = True
 except ImportError:
-    TinyJit = lambda x: x  # no-op if tinygrad not available
+
+    def TinyJit(x):
+        return x  # no-op if tinygrad not available
+
     TINYGRAD_AVAILABLE = False
 
 
 def control_loop(
     rate_hz: float = 500.0,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> Callable[[F], F]:
     """
     Decorator to mark a function as a control loop callback.
@@ -68,7 +72,7 @@ def control_loop(
 
 
 def policy(
-    model: Optional[str] = None,
+    model: str | None = None,
     jit: bool = False,
 ) -> Callable[[F], F]:
     """
@@ -165,9 +169,9 @@ class MotorCommands:
 
     def __init__(
         self,
-        positions: Optional[dict[str, float]] = None,
-        velocities: Optional[dict[str, float]] = None,
-        torques: Optional[dict[str, float]] = None,
+        positions: dict[str, float] | None = None,
+        velocities: dict[str, float] | None = None,
+        torques: dict[str, float] | None = None,
         kp: float = 20.0,
         kd: float = 0.5,
     ) -> None:
@@ -183,7 +187,7 @@ class MotorCommands:
         positions: dict[str, float],
         kp: float = 20.0,
         kd: float = 0.5,
-    ) -> "MotorCommands":
+    ) -> MotorCommands:
         """Create commands from named positions."""
         return cls(positions=positions, kp=kp, kd=kd)
 
@@ -192,7 +196,7 @@ class MotorCommands:
         cls,
         velocities: dict[str, float],
         kd: float = 0.5,
-    ) -> "MotorCommands":
+    ) -> MotorCommands:
         """Create commands from named velocities."""
         return cls(velocities=velocities, kd=kd)
 
@@ -200,7 +204,7 @@ class MotorCommands:
     def from_torques(
         cls,
         torques: dict[str, float],
-    ) -> "MotorCommands":
+    ) -> MotorCommands:
         """Create commands from named torques."""
         return cls(torques=torques)
 

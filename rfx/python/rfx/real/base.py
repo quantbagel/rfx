@@ -4,11 +4,11 @@ rfx.real.base - Base class for real hardware robots
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional, Union
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ..robot import RobotBase
 from ..config import RobotConfig
+from ..robot import RobotBase
 
 if TYPE_CHECKING:
     import torch
@@ -19,8 +19,8 @@ class RealRobot(RobotBase):
 
     def __init__(
         self,
-        config: Union[str, Path, RobotConfig, Dict],
-        robot_type: Optional[str] = None,
+        config: str | Path | RobotConfig | dict,
+        robot_type: str | None = None,
         **kwargs,
     ):
         if isinstance(config, (str, Path)):
@@ -57,7 +57,7 @@ class RealRobot(RobotBase):
         else:
             raise ValueError(f"Cannot detect robot type from: {self._config.name}")
 
-    def _create_backend(self, robot_type: str, hardware_config: Dict):
+    def _create_backend(self, robot_type: str, hardware_config: dict):
         if robot_type == "so101":
             from .so101 import So101Backend
 
@@ -77,13 +77,13 @@ class RealRobot(RobotBase):
     def config(self) -> RobotConfig:
         return self._config
 
-    def observe(self) -> Dict[str, "torch.Tensor"]:
+    def observe(self) -> dict[str, torch.Tensor]:
         return self._backend.observe()
 
-    def act(self, action: "torch.Tensor") -> None:
+    def act(self, action: torch.Tensor) -> None:
         self._backend.act(action)
 
-    def reset(self, env_ids: Optional["torch.Tensor"] = None) -> Dict[str, "torch.Tensor"]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         return self._backend.reset()
 
     def go_home(self) -> None:
@@ -97,8 +97,8 @@ class RealRobot(RobotBase):
 
     @classmethod
     def from_config(
-        cls, config_path: Union[str, Path], robot_type: Optional[str] = None, **kwargs
-    ) -> "RealRobot":
+        cls, config_path: str | Path, robot_type: str | None = None, **kwargs
+    ) -> RealRobot:
         return cls(config_path, robot_type=robot_type, **kwargs)
 
     def __repr__(self) -> str:

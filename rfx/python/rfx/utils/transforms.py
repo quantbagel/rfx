@@ -5,7 +5,7 @@ rfx.utils.transforms - Observation and action transforms
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import torch
@@ -18,8 +18,8 @@ class ObservationNormalizer:
     state_dim: int
     clip: float = 10.0
     eps: float = 1e-8
-    _mean: "torch.Tensor" = field(init=False)
-    _var: "torch.Tensor" = field(init=False)
+    _mean: torch.Tensor = field(init=False)
+    _var: torch.Tensor = field(init=False)
     _count: int = field(default=0, init=False)
 
     def __post_init__(self):
@@ -28,7 +28,7 @@ class ObservationNormalizer:
         self._mean = torch.zeros(self.state_dim)
         self._var = torch.ones(self.state_dim)
 
-    def update(self, state: "torch.Tensor") -> None:
+    def update(self, state: torch.Tensor) -> None:
         batch_mean = state.mean(dim=0)
         batch_var = state.var(dim=0)
         batch_count = state.shape[0]
@@ -43,7 +43,7 @@ class ObservationNormalizer:
         self._var = M2 / total_count
         self._count = total_count
 
-    def normalize(self, obs: Dict[str, "torch.Tensor"]) -> Dict[str, "torch.Tensor"]:
+    def normalize(self, obs: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         import torch
 
         result = {}
@@ -74,14 +74,14 @@ class ActionChunker:
     action_dim: int
     ensemble_mode: str = "exponential"
     temperature: float = 0.5
-    _chunks: List["torch.Tensor"] = field(default_factory=list, init=False)
+    _chunks: list[torch.Tensor] = field(default_factory=list, init=False)
 
-    def add_chunk(self, chunk: "torch.Tensor") -> None:
+    def add_chunk(self, chunk: torch.Tensor) -> None:
         self._chunks.append(chunk)
         if len(self._chunks) > self.horizon:
             self._chunks.pop(0)
 
-    def get_action(self) -> "torch.Tensor":
+    def get_action(self) -> torch.Tensor:
         import torch
 
         if not self._chunks:

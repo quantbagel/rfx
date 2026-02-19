@@ -4,11 +4,11 @@ rfx.real.so101 - SO-101 arm hardware backend
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 import torch
 
-from ..config import RobotConfig, SO101_CONFIG
+from ..config import SO101_CONFIG, RobotConfig
 from ..observation import make_observation
 
 if TYPE_CHECKING:
@@ -35,8 +35,10 @@ class So101Backend:
 
             self._So101 = So101
             self._So101Config = So101Config
-        except ImportError:
-            raise ImportError("rfx Rust bindings not available. Build with: maturin develop")
+        except ImportError as err:
+            raise ImportError(
+                "rfx Rust bindings not available. Build with: maturin develop"
+            ) from err
 
         if is_leader:
             rust_config = So101Config.leader(port)
@@ -61,7 +63,7 @@ class So101Backend:
     def is_connected(self) -> bool:
         return self._arm.is_connected()
 
-    def observe(self) -> Dict[str, torch.Tensor]:
+    def observe(self) -> dict[str, torch.Tensor]:
         state = self._arm.state()
         positions = torch.tensor(state.joint_positions(), dtype=torch.float32)
         velocities = torch.tensor(state.joint_velocities(), dtype=torch.float32)
@@ -86,7 +88,7 @@ class So101Backend:
         action_6dof = action[0, : self.config.action_dim].cpu().numpy()
         self._arm.set_positions(list(action_6dof))
 
-    def reset(self) -> Dict[str, torch.Tensor]:
+    def reset(self) -> dict[str, torch.Tensor]:
         if not self.is_leader:
             self._arm.go_home()
         return self.observe()

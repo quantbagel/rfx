@@ -13,7 +13,7 @@ Example:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, Optional, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     import torch
@@ -68,7 +68,7 @@ class Robot(Protocol):
         """Device for tensors ('cuda' or 'cpu')."""
         ...
 
-    def observe(self) -> Dict[str, "torch.Tensor"]:
+    def observe(self) -> dict[str, torch.Tensor]:
         """
         Get current observation as a dictionary of tensors.
 
@@ -80,7 +80,7 @@ class Robot(Protocol):
         """
         ...
 
-    def act(self, action: "torch.Tensor") -> None:
+    def act(self, action: torch.Tensor) -> None:
         """
         Execute an action on the robot.
 
@@ -89,7 +89,7 @@ class Robot(Protocol):
         """
         ...
 
-    def reset(self, env_ids: Optional["torch.Tensor"] = None) -> Dict[str, "torch.Tensor"]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         """
         Reset environments and return initial observation.
 
@@ -151,22 +151,22 @@ class RobotBase(ABC):
         return self._device
 
     @abstractmethod
-    def observe(self) -> Dict[str, "torch.Tensor"]:
+    def observe(self) -> dict[str, torch.Tensor]:
         """Get current observation."""
         ...
 
     @abstractmethod
-    def act(self, action: "torch.Tensor") -> None:
+    def act(self, action: torch.Tensor) -> None:
         """Execute action."""
         ...
 
     @abstractmethod
-    def reset(self, env_ids: Optional["torch.Tensor"] = None) -> Dict[str, "torch.Tensor"]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         """Reset environments."""
         ...
 
     @classmethod
-    def from_config(cls, config_path: str, **kwargs) -> "RobotBase":
+    def from_config(cls, config_path: str, **kwargs) -> RobotBase:
         """Create a robot from a YAML config file."""
         from .config import load_config
 

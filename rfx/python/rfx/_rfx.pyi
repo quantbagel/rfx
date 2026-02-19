@@ -4,7 +4,8 @@ Type stubs for the pi Rust extension module.
 This file provides type hints for IDE autocomplete and static type checking.
 """
 
-from typing import Any, Callable, List, Optional, Tuple, overload
+from collections.abc import Callable
+from typing import overload
 
 # Version info
 __version__: str
@@ -36,12 +37,12 @@ class Quaternion:
         ...
 
     @staticmethod
-    def identity() -> "Quaternion":
+    def identity() -> Quaternion:
         """Create identity quaternion (no rotation)."""
         ...
 
     @staticmethod
-    def from_euler(roll: float, pitch: float, yaw: float) -> "Quaternion":
+    def from_euler(roll: float, pitch: float, yaw: float) -> Quaternion:
         """
         Create from Euler angles (roll, pitch, yaw) in radians.
 
@@ -53,7 +54,7 @@ class Quaternion:
         ...
 
     @staticmethod
-    def from_axis_angle(axis: Tuple[float, float, float], angle: float) -> "Quaternion":
+    def from_axis_angle(axis: tuple[float, float, float], angle: float) -> Quaternion:
         """
         Create from axis-angle representation.
 
@@ -63,7 +64,7 @@ class Quaternion:
         """
         ...
 
-    def to_euler(self) -> Tuple[float, float, float]:
+    def to_euler(self) -> tuple[float, float, float]:
         """
         Get Euler angles (roll, pitch, yaw) in radians.
 
@@ -72,7 +73,7 @@ class Quaternion:
         """
         ...
 
-    def rotate_vector(self, v: Tuple[float, float, float]) -> Tuple[float, float, float]:
+    def rotate_vector(self, v: tuple[float, float, float]) -> tuple[float, float, float]:
         """
         Rotate a 3D vector by this quaternion.
 
@@ -84,7 +85,7 @@ class Quaternion:
         """
         ...
 
-    def slerp(self, other: "Quaternion", t: float) -> "Quaternion":
+    def slerp(self, other: Quaternion, t: float) -> Quaternion:
         """
         Spherical linear interpolation between quaternions.
 
@@ -97,11 +98,11 @@ class Quaternion:
         """
         ...
 
-    def inverse(self) -> "Quaternion":
+    def inverse(self) -> Quaternion:
         """Get the inverse (conjugate) quaternion."""
         ...
 
-    def __mul__(self, other: "Quaternion") -> "Quaternion":
+    def __mul__(self, other: Quaternion) -> Quaternion:
         """Multiply with another quaternion (compose rotations)."""
         ...
 
@@ -157,34 +158,34 @@ class Transform:
     @overload
     def __init__(
         self,
-        position: Optional[Tuple[float, float, float]] = None,
-        orientation: Optional[Quaternion] = None,
+        position: tuple[float, float, float] | None = None,
+        orientation: Quaternion | None = None,
     ) -> None: ...
     def __init__(
         self,
-        position: Optional[Tuple[float, float, float]] = None,
-        orientation: Optional[Quaternion] = None,
+        position: tuple[float, float, float] | None = None,
+        orientation: Quaternion | None = None,
     ) -> None:
         """Create a transform from position and orientation."""
         ...
 
     @staticmethod
-    def identity() -> "Transform":
+    def identity() -> Transform:
         """Create identity transform (no translation or rotation)."""
         ...
 
     @staticmethod
-    def from_position(x: float, y: float, z: float) -> "Transform":
+    def from_position(x: float, y: float, z: float) -> Transform:
         """Create a transform with translation only."""
         ...
 
     @staticmethod
     def from_euler(
-        position: Tuple[float, float, float],
+        position: tuple[float, float, float],
         roll: float,
         pitch: float,
         yaw: float,
-    ) -> "Transform":
+    ) -> Transform:
         """
         Create from position and Euler angles.
 
@@ -196,32 +197,32 @@ class Transform:
         """
         ...
 
-    def compose(self, other: "Transform") -> "Transform":
+    def compose(self, other: Transform) -> Transform:
         """Compose with another transform (this * other)."""
         ...
 
-    def inverse(self) -> "Transform":
+    def inverse(self) -> Transform:
         """Get the inverse transform."""
         ...
 
-    def transform_point(self, point: Tuple[float, float, float]) -> Tuple[float, float, float]:
+    def transform_point(self, point: tuple[float, float, float]) -> tuple[float, float, float]:
         """Transform a 3D point (applies rotation then translation)."""
         ...
 
-    def transform_vector(self, vector: Tuple[float, float, float]) -> Tuple[float, float, float]:
+    def transform_vector(self, vector: tuple[float, float, float]) -> tuple[float, float, float]:
         """Transform a 3D vector (rotation only, no translation)."""
         ...
 
-    def lerp(self, other: "Transform", t: float) -> "Transform":
+    def lerp(self, other: Transform, t: float) -> Transform:
         """Linear interpolation between transforms."""
         ...
 
-    def __mul__(self, other: "Transform") -> "Transform":
+    def __mul__(self, other: Transform) -> Transform:
         """Compose transforms (same as compose)."""
         ...
 
     @property
-    def position(self) -> Tuple[float, float, float]:
+    def position(self) -> tuple[float, float, float]:
         """Position [x, y, z]."""
         ...
 
@@ -284,7 +285,7 @@ class LowPassFilter:
         ...
 
     @staticmethod
-    def from_cutoff(cutoff_hz: float, sample_rate_hz: float) -> "LowPassFilter":
+    def from_cutoff(cutoff_hz: float, sample_rate_hz: float) -> LowPassFilter:
         """
         Create from cutoff frequency and sample rate.
 
@@ -384,11 +385,11 @@ class PidConfig:
         """
         ...
 
-    def with_limits(self, min: float, max: float) -> "PidConfig":
+    def with_limits(self, min: float, max: float) -> PidConfig:
         """Set output limits."""
         ...
 
-    def with_integral_limit(self, limit: float) -> "PidConfig":
+    def with_integral_limit(self, limit: float) -> PidConfig:
         """Set integral windup limit."""
         ...
 
@@ -421,22 +422,22 @@ class Pid:
         ...
 
     @staticmethod
-    def p(kp: float) -> "Pid":
+    def p(kp: float) -> Pid:
         """Create a P-only controller."""
         ...
 
     @staticmethod
-    def pi(kp: float, ki: float) -> "Pid":
+    def pi(kp: float, ki: float) -> Pid:
         """Create a PI controller."""
         ...
 
     @staticmethod
-    def pd(kp: float, kd: float) -> "Pid":
+    def pd(kp: float, kd: float) -> Pid:
         """Create a PD controller."""
         ...
 
     @staticmethod
-    def pid(kp: float, ki: float, kd: float) -> "Pid":
+    def pid(kp: float, ki: float, kd: float) -> Pid:
         """Create a full PID controller."""
         ...
 
@@ -504,15 +505,15 @@ class ControlLoopHandle:
         """Request the loop to stop."""
         ...
 
-    def stats(self) -> Optional[ControlLoopStats]:
+    def stats(self) -> ControlLoopStats | None:
         """Get current loop statistics."""
         ...
 
 def run_control_loop(
     rate_hz: float,
     callback: Callable[[int, float], bool],
-    name: Optional[str] = None,
-    max_iterations: Optional[int] = None,
+    name: str | None = None,
+    max_iterations: int | None = None,
 ) -> ControlLoopStats:
     """
     Run a control loop at the specified rate.
@@ -560,11 +561,11 @@ class Go2Config:
         """
         ...
 
-    def with_edu_mode(self) -> "Go2Config":
+    def with_edu_mode(self) -> Go2Config:
         """Enable EDU mode for low-level motor control."""
         ...
 
-    def with_interface(self, interface: str) -> "Go2Config":
+    def with_interface(self, interface: str) -> Go2Config:
         """
         Set the network interface to use.
 
@@ -587,22 +588,22 @@ class ImuState:
     """IMU sensor state from the robot."""
 
     @property
-    def quaternion(self) -> Tuple[float, float, float, float]:
+    def quaternion(self) -> tuple[float, float, float, float]:
         """Orientation as quaternion [w, x, y, z]."""
         ...
 
     @property
-    def gyroscope(self) -> Tuple[float, float, float]:
+    def gyroscope(self) -> tuple[float, float, float]:
         """Angular velocity [x, y, z] in rad/s."""
         ...
 
     @property
-    def accelerometer(self) -> Tuple[float, float, float]:
+    def accelerometer(self) -> tuple[float, float, float]:
         """Linear acceleration [x, y, z] in m/s^2."""
         ...
 
     @property
-    def rpy(self) -> Tuple[float, float, float]:
+    def rpy(self) -> tuple[float, float, float]:
         """Euler angles [roll, pitch, yaw] in radians."""
         ...
 
@@ -673,7 +674,7 @@ class MotorCmd:
         ...
 
     @staticmethod
-    def position(q: float, kp: float, kd: float) -> "MotorCmd":
+    def position(q: float, kp: float, kd: float) -> MotorCmd:
         """
         Create a position control command.
 
@@ -685,7 +686,7 @@ class MotorCmd:
         ...
 
     @staticmethod
-    def damping(kd: float) -> "MotorCmd":
+    def damping(kd: float) -> MotorCmd:
         """
         Create a pure damping command (position tracking disabled).
 
@@ -745,25 +746,25 @@ class Go2State:
         ...
 
     @property
-    def position(self) -> Tuple[float, float, float]:
+    def position(self) -> tuple[float, float, float]:
         """Estimated position [x, y, z] in meters."""
         ...
 
     @property
-    def velocity(self) -> Tuple[float, float, float]:
+    def velocity(self) -> tuple[float, float, float]:
         """Estimated velocity [vx, vy, vz] in m/s."""
         ...
 
     @property
-    def foot_contact(self) -> Tuple[bool, bool, bool, bool]:
+    def foot_contact(self) -> tuple[bool, bool, bool, bool]:
         """Foot contact states [FR, FL, RR, RL]."""
         ...
 
-    def joint_positions(self) -> Tuple[float, ...]:
+    def joint_positions(self) -> tuple[float, ...]:
         """Get all 12 joint positions in radians."""
         ...
 
-    def joint_velocities(self) -> Tuple[float, ...]:
+    def joint_velocities(self) -> tuple[float, ...]:
         """Get all 12 joint velocities in rad/s."""
         ...
 
@@ -793,9 +794,9 @@ class Go2:
 
     @staticmethod
     def connect(
-        config: Optional[Go2Config] = None,
-        ip_address: Optional[str] = None,
-    ) -> "Go2":
+        config: Go2Config | None = None,
+        ip_address: str | None = None,
+    ) -> Go2:
         """
         Connect to a Go2 robot.
 
@@ -862,7 +863,7 @@ class Go2:
 
     def set_motor_positions(
         self,
-        positions: Tuple[float, ...],
+        positions: tuple[float, ...],
         kp: float,
         kd: float,
     ) -> None:
@@ -905,10 +906,10 @@ class motor_idx:
 
     NUM_MOTORS: int
 
-MOTOR_NAMES: List[str]
+MOTOR_NAMES: list[str]
 """Motor names in order: ['FR_hip', 'FR_thigh', 'FR_calf', ...]"""
 
-def motor_index_by_name(name: str) -> Optional[int]:
+def motor_index_by_name(name: str) -> int | None:
     """
     Get motor index by name.
 
@@ -944,12 +945,12 @@ class PhysicsConfig:
         ...
 
     @staticmethod
-    def fast() -> "PhysicsConfig":
+    def fast() -> PhysicsConfig:
         """Create a fast simulation preset."""
         ...
 
     @staticmethod
-    def accurate() -> "PhysicsConfig":
+    def accurate() -> PhysicsConfig:
         """Create a high-accuracy simulation preset."""
         ...
 
@@ -964,7 +965,7 @@ class PhysicsConfig:
         ...
 
     @property
-    def gravity(self) -> Tuple[float, float, float]:
+    def gravity(self) -> tuple[float, float, float]:
         """Gravity vector [x, y, z] in m/s^2."""
         ...
 
@@ -988,26 +989,26 @@ class SimConfig:
         ...
 
     @staticmethod
-    def mock() -> "SimConfig":
+    def mock() -> SimConfig:
         """Create mock simulation config (for testing)."""
         ...
 
     @staticmethod
-    def isaac_sim() -> "SimConfig":
+    def isaac_sim() -> SimConfig:
         """Create NVIDIA Isaac Sim configuration."""
         ...
 
     @staticmethod
-    def genesis() -> "SimConfig":
+    def genesis() -> SimConfig:
         """Create Genesis simulation configuration."""
         ...
 
     @staticmethod
-    def mujoco() -> "SimConfig":
+    def mujoco() -> SimConfig:
         """Create MuJoCo simulation configuration."""
         ...
 
-    def with_num_envs(self, n: int) -> "SimConfig":
+    def with_num_envs(self, n: int) -> SimConfig:
         """Set number of parallel environments."""
         ...
 
@@ -1051,11 +1052,11 @@ class SimState:
         """Reward value (for RL)."""
         ...
 
-    def joint_positions(self) -> List[float]:
+    def joint_positions(self) -> list[float]:
         """Get joint positions from robot state."""
         ...
 
-    def joint_velocities(self) -> List[float]:
+    def joint_velocities(self) -> list[float]:
         """Get joint velocities from robot state."""
         ...
 
@@ -1075,7 +1076,7 @@ class MockSimBackend:
         ...         state = sim.reset()
     """
 
-    def __init__(self, config: Optional[SimConfig] = None) -> None:
+    def __init__(self, config: SimConfig | None = None) -> None:
         """Create a mock simulation backend."""
         ...
 
@@ -1087,7 +1088,7 @@ class MockSimBackend:
         """Reset simulation to initial state."""
         ...
 
-    def step(self, actions: List[float]) -> Tuple[SimState, bool]:
+    def step(self, actions: list[float]) -> tuple[SimState, bool]:
         """
         Step the simulation.
 
@@ -1160,7 +1161,7 @@ class Sender:
         ...
 
     @property
-    def capacity(self) -> Optional[int]:
+    def capacity(self) -> int | None:
         """Channel capacity (None for unbounded)."""
         ...
 
@@ -1187,7 +1188,7 @@ class Receiver:
         """
         ...
 
-    def try_recv(self) -> Optional[str]:
+    def try_recv(self) -> str | None:
         """
         Try to receive without blocking.
 
@@ -1196,7 +1197,7 @@ class Receiver:
         """
         ...
 
-    def recv_timeout(self, timeout_secs: float) -> Optional[str]:
+    def recv_timeout(self, timeout_secs: float) -> str | None:
         """
         Receive with a timeout.
 
@@ -1208,7 +1209,7 @@ class Receiver:
         """
         ...
 
-    def latest(self) -> Optional[str]:
+    def latest(self) -> str | None:
         """
         Get the latest message, discarding older ones.
 
@@ -1217,7 +1218,7 @@ class Receiver:
         """
         ...
 
-    def drain(self) -> List[str]:
+    def drain(self) -> list[str]:
         """
         Drain all available messages.
 
@@ -1234,7 +1235,7 @@ class Receiver:
         """Number of messages in the channel."""
         ...
 
-def channel(capacity: int) -> Tuple[Sender, Receiver]:
+def channel(capacity: int) -> tuple[Sender, Receiver]:
     """
     Create a bounded channel with the specified capacity.
 
@@ -1250,7 +1251,7 @@ def channel(capacity: int) -> Tuple[Sender, Receiver]:
     """
     ...
 
-def unbounded_channel() -> Tuple[Sender, Receiver]:
+def unbounded_channel() -> tuple[Sender, Receiver]:
     """
     Create an unbounded channel.
 
@@ -1281,7 +1282,7 @@ class Stream:
         >>> latest = stream.latest()  # Get most recent, discard old
     """
 
-    def next(self) -> Optional[str]:
+    def next(self) -> str | None:
         """
         Receive the next value, blocking until available.
 
@@ -1290,7 +1291,7 @@ class Stream:
         """
         ...
 
-    def next_timeout(self, timeout_secs: float) -> Optional[str]:
+    def next_timeout(self, timeout_secs: float) -> str | None:
         """
         Receive with a timeout.
 
@@ -1302,7 +1303,7 @@ class Stream:
         """
         ...
 
-    def try_next(self) -> Optional[str]:
+    def try_next(self) -> str | None:
         """
         Try to receive without blocking.
 
@@ -1311,7 +1312,7 @@ class Stream:
         """
         ...
 
-    def latest(self) -> Optional[str]:
+    def latest(self) -> str | None:
         """
         Get the latest value, discarding older ones.
 

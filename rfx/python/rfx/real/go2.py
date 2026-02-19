@@ -8,11 +8,11 @@ import os
 import subprocess
 import sys
 import threading
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 
 import torch
 
-from ..config import RobotConfig, GO2_CONFIG
+from ..config import GO2_CONFIG, RobotConfig
 from ..observation import make_observation
 
 if TYPE_CHECKING:
@@ -30,8 +30,8 @@ class Go2Backend:
         config: RobotConfig,
         ip_address: str = "192.168.123.161",
         edu_mode: bool = False,
-        dds_backend: Optional[str] = None,
-        zenoh_endpoint: Optional[str] = None,
+        dds_backend: str | None = None,
+        zenoh_endpoint: str | None = None,
         **kwargs,
     ):
         self.config = config
@@ -45,11 +45,16 @@ class Go2Backend:
         self._state_lock = threading.Lock()
 
         # Resolve DDS backend: explicit param > env var > auto
-        backend_pref = (
-            dds_backend
-            or os.getenv("RFX_GO2_BACKEND", "auto")
-        ).strip().lower()
-        if backend_pref not in {"auto", "rust", "unitree", "unitree_sdk2py", "zenoh", "dust", "cyclone"}:
+        backend_pref = (dds_backend or os.getenv("RFX_GO2_BACKEND", "auto")).strip().lower()
+        if backend_pref not in {
+            "auto",
+            "rust",
+            "unitree",
+            "unitree_sdk2py",
+            "zenoh",
+            "dust",
+            "cyclone",
+        }:
             backend_pref = "auto"
 
         if not self.edu_mode and backend_pref in {"auto", "unitree", "unitree_sdk2py"}:
@@ -65,8 +70,10 @@ class Go2Backend:
 
             self._Go2 = Go2
             self._Go2Config = Go2Config
-        except ImportError:
-            raise ImportError("rfx Rust bindings not available. Build with: maturin develop")
+        except ImportError as err:
+            raise ImportError(
+                "rfx Rust bindings not available. Build with: maturin develop"
+            ) from err
 
         rust_config = Go2Config(ip_address)
         if edu_mode:
@@ -134,8 +141,7 @@ class Go2Backend:
         try:
             p = subprocess.run(
                 [self._system_python, "-c", check],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=True,
                 timeout=3.0,
                 check=False,
@@ -169,7 +175,7 @@ class Go2Backend:
         else:
             api_id = api_id_map[command]
             if command == "Move":
-                parameter = '{"x":%s,"y":%s,"z":%s}' % (args[0], args[1], args[2])
+                parameter = f'{{"x":{args[0]},"y":{args[1]},"z":{args[2]}}}'
                 noreply = True
             else:
                 parameter = "{}"
@@ -189,8 +195,7 @@ class Go2Backend:
 
         p = subprocess.run(
             [self._system_python, "-c", py],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             timeout=6.0,
             check=False,
@@ -214,7 +219,7 @@ class Go2Backend:
             return self._run_unitree_cmd("GetServerApiVersion") == 0
         return self._robot.is_connected()
 
-    def observe(self) -> Dict[str, torch.Tensor]:
+    def observe(self) -> dict[str, torch.Tensor]:
         if self._backend_mode in {"unitree_sdk2py", "unitree_subprocess"}:
             with self._state_lock:
                 low_state = self._latest_lowstate
@@ -296,7 +301,7 @@ class Go2Backend:
             kd = action[0, 13].item() if action.shape[1] > 13 else 0.5
             self._robot.set_motor_positions(list(action_12dof), kp, kd)
 
-    def reset(self) -> Dict[str, torch.Tensor]:
+    def reset(self) -> dict[str, torch.Tensor]:
         if self._backend_mode == "unitree_sdk2py":
             self._check_rc(self._sport_client.RecoveryStand(), "RecoveryStand")
             return self.observe()
@@ -385,8 +390,8 @@ class Go2Robot:
     def __new__(
         cls,
         ip_address: str = "192.168.123.161",
-        dds_backend: Optional[str] = None,
-        zenoh_endpoint: Optional[str] = None,
+        dds_backend: str | None = None,
+        zenoh_endpoint: str | None = None,
         edu_mode: bool = False,
         **kwargs,
     ):

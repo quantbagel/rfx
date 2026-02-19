@@ -17,24 +17,29 @@ from __future__ import annotations
 
 import math
 import xml.etree.ElementTree as ET
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .config import RobotConfig
 
 
 # ---------------------------------------------------------------------------
 # Geometry primitives
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Origin:
-    xyz: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-    rpy: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    xyz: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    rpy: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
 
 @dataclass
 class Box:
-    size: Tuple[float, float, float] = (0.0, 0.0, 0.0)
+    size: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
 
 @dataclass
@@ -51,22 +56,22 @@ class Sphere:
 @dataclass
 class Mesh:
     filename: str = ""
-    scale: Tuple[float, float, float] = (1.0, 1.0, 1.0)
+    scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
 
 
 @dataclass
 class Geometry:
-    box: Optional[Box] = None
-    cylinder: Optional[Cylinder] = None
-    sphere: Optional[Sphere] = None
-    mesh: Optional[Mesh] = None
+    box: Box | None = None
+    cylinder: Cylinder | None = None
+    sphere: Sphere | None = None
+    mesh: Mesh | None = None
 
 
 @dataclass
 class Material:
     name: str = ""
-    color: Optional[Tuple[float, float, float, float]] = None
-    texture: Optional[str] = None
+    color: tuple[float, float, float, float] | None = None
+    texture: str | None = None
 
 
 @dataclass
@@ -84,15 +89,15 @@ class Inertial:
 @dataclass
 class Visual:
     origin: Origin = field(default_factory=Origin)
-    geometry: Optional[Geometry] = None
-    material: Optional[Material] = None
+    geometry: Geometry | None = None
+    material: Material | None = None
     name: str = ""
 
 
 @dataclass
 class Collision:
     origin: Origin = field(default_factory=Origin)
-    geometry: Optional[Geometry] = None
+    geometry: Geometry | None = None
     name: str = ""
 
 
@@ -100,12 +105,13 @@ class Collision:
 # Links and joints
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class URDFLink:
     name: str
-    inertial: Optional[Inertial] = None
-    visuals: List[Visual] = field(default_factory=list)
-    collisions: List[Collision] = field(default_factory=list)
+    inertial: Inertial | None = None
+    visuals: list[Visual] = field(default_factory=list)
+    collisions: list[Collision] = field(default_factory=list)
 
 
 @dataclass
@@ -123,8 +129,8 @@ class URDFJoint:
     parent: str
     child: str
     origin: Origin = field(default_factory=Origin)
-    axis: Tuple[float, float, float] = (1.0, 0.0, 0.0)
-    limit: Optional[JointLimit] = None
+    axis: tuple[float, float, float] = (1.0, 0.0, 0.0)
+    limit: JointLimit | None = None
 
     @property
     def is_actuated(self) -> bool:
@@ -139,7 +145,8 @@ class URDFJoint:
 # Transform math (pure Python, no deps)
 # ---------------------------------------------------------------------------
 
-def _rpy_to_matrix(roll: float, pitch: float, yaw: float) -> List[List[float]]:
+
+def _rpy_to_matrix(roll: float, pitch: float, yaw: float) -> list[list[float]]:
     """Euler angles (XYZ convention) to 3x3 rotation matrix (row-major)."""
     cr, sr = math.cos(roll), math.sin(roll)
     cp, sp = math.cos(pitch), math.sin(pitch)
@@ -151,7 +158,7 @@ def _rpy_to_matrix(roll: float, pitch: float, yaw: float) -> List[List[float]]:
     ]
 
 
-def _origin_to_matrix(origin: Origin) -> List[List[float]]:
+def _origin_to_matrix(origin: Origin) -> list[list[float]]:
     """Convert Origin(xyz, rpy) to a 4x4 homogeneous transform (row-major)."""
     rot = _rpy_to_matrix(*origin.rpy)
     x, y, z = origin.xyz
@@ -163,7 +170,7 @@ def _origin_to_matrix(origin: Origin) -> List[List[float]]:
     ]
 
 
-def _axis_rotation(axis: Tuple[float, float, float], angle: float) -> List[List[float]]:
+def _axis_rotation(axis: tuple[float, float, float], angle: float) -> list[list[float]]:
     """Rotation matrix (4x4) around an arbitrary unit axis by angle (radians)."""
     ax, ay, az = axis
     norm = math.sqrt(ax * ax + ay * ay + az * az)
@@ -180,7 +187,7 @@ def _axis_rotation(axis: Tuple[float, float, float], angle: float) -> List[List[
     ]
 
 
-def _axis_translation(axis: Tuple[float, float, float], distance: float) -> List[List[float]]:
+def _axis_translation(axis: tuple[float, float, float], distance: float) -> list[list[float]]:
     """Translation matrix (4x4) along an arbitrary axis by distance."""
     ax, ay, az = axis
     norm = math.sqrt(ax * ax + ay * ay + az * az)
@@ -195,7 +202,7 @@ def _axis_translation(axis: Tuple[float, float, float], distance: float) -> List
     ]
 
 
-def _identity4() -> List[List[float]]:
+def _identity4() -> list[list[float]]:
     return [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
@@ -204,7 +211,7 @@ def _identity4() -> List[List[float]]:
     ]
 
 
-def _matmul4(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
+def _matmul4(a: list[list[float]], b: list[list[float]]) -> list[list[float]]:
     """Multiply two 4x4 matrices."""
     result = [[0.0] * 4 for _ in range(4)]
     for i in range(4):
@@ -220,11 +227,12 @@ def _matmul4(a: List[List[float]], b: List[List[float]]) -> List[List[float]]:
 # XML parsing helpers
 # ---------------------------------------------------------------------------
 
-def _parse_floats(text: str) -> Tuple[float, ...]:
+
+def _parse_floats(text: str) -> tuple[float, ...]:
     return tuple(float(x) for x in text.split())
 
 
-def _parse_origin(elem: Optional[ET.Element]) -> Origin:
+def _parse_origin(elem: ET.Element | None) -> Origin:
     if elem is None:
         return Origin()
     xyz = _parse_floats(elem.get("xyz", "0 0 0"))
@@ -232,7 +240,7 @@ def _parse_origin(elem: Optional[ET.Element]) -> Origin:
     return Origin(xyz=(xyz[0], xyz[1], xyz[2]), rpy=(rpy[0], rpy[1], rpy[2]))
 
 
-def _parse_geometry(elem: Optional[ET.Element]) -> Optional[Geometry]:
+def _parse_geometry(elem: ET.Element | None) -> Geometry | None:
     if elem is None:
         return None
     geom = Geometry()
@@ -260,7 +268,7 @@ def _parse_geometry(elem: Optional[ET.Element]) -> Optional[Geometry]:
     return geom
 
 
-def _parse_material(elem: Optional[ET.Element]) -> Optional[Material]:
+def _parse_material(elem: ET.Element | None) -> Material | None:
     if elem is None:
         return None
     mat = Material(name=elem.get("name", ""))
@@ -274,7 +282,7 @@ def _parse_material(elem: Optional[ET.Element]) -> Optional[Material]:
     return mat
 
 
-def _parse_inertial(elem: Optional[ET.Element]) -> Optional[Inertial]:
+def _parse_inertial(elem: ET.Element | None) -> Inertial | None:
     if elem is None:
         return None
     origin = _parse_origin(elem.find("origin"))
@@ -359,6 +367,7 @@ def _parse_joint(elem: ET.Element) -> URDFJoint:
 # URDF model
 # ---------------------------------------------------------------------------
 
+
 class URDF:
     """Parsed URDF robot model.
 
@@ -381,10 +390,10 @@ class URDF:
     def __init__(
         self,
         name: str,
-        links: List[URDFLink],
-        joints: List[URDFJoint],
-        materials: Dict[str, Material],
-        source_path: Optional[str] = None,
+        links: list[URDFLink],
+        joints: list[URDFJoint],
+        materials: dict[str, Material],
+        source_path: str | None = None,
     ):
         self.name = name
         self.links = {link.name: link for link in links}
@@ -393,8 +402,8 @@ class URDF:
         self.source_path = source_path
 
         # Build parent→children map and child→parent map
-        self._children: Dict[str, List[str]] = {}  # link_name → [joint_names]
-        self._parent_joint: Dict[str, str] = {}  # child_link → joint_name
+        self._children: dict[str, list[str]] = {}  # link_name → [joint_names]
+        self._parent_joint: dict[str, str] = {}  # child_link → joint_name
         for jname, joint in self.joints.items():
             self._children.setdefault(joint.parent, []).append(jname)
             self._parent_joint[joint.child] = jname
@@ -405,7 +414,7 @@ class URDF:
         self.root = roots[0] if roots else ""
 
         # Cache actuated joint list in tree-traversal order
-        self._actuated: List[URDFJoint] = []
+        self._actuated: list[URDFJoint] = []
         self._walk_tree(self.root)
 
     def _walk_tree(self, link_name: str) -> None:
@@ -420,7 +429,7 @@ class URDF:
     # ------------------------------------------------------------------
 
     @classmethod
-    def load(cls, path: Union[str, Path]) -> "URDF":
+    def load(cls, path: str | Path) -> URDF:
         """Load and parse a URDF file."""
         path = Path(path).resolve()
         if not path.exists():
@@ -430,13 +439,13 @@ class URDF:
         return model
 
     @classmethod
-    def from_string(cls, xml_string: str) -> "URDF":
+    def from_string(cls, xml_string: str) -> URDF:
         """Parse URDF from an XML string."""
         root = ET.fromstring(xml_string)
         name = root.get("name", "robot")
 
         # Top-level materials
-        materials: Dict[str, Material] = {}
+        materials: dict[str, Material] = {}
         for mat_elem in root.findall("material"):
             mat = _parse_material(mat_elem)
             if mat is not None:
@@ -451,7 +460,7 @@ class URDF:
     # ------------------------------------------------------------------
 
     @property
-    def actuated_joints(self) -> List[str]:
+    def actuated_joints(self) -> list[str]:
         """Names of all actuated (non-fixed) joints in tree order."""
         return [j.name for j in self._actuated]
 
@@ -460,23 +469,19 @@ class URDF:
         return len(self._actuated)
 
     @property
-    def joint_names(self) -> List[str]:
+    def joint_names(self) -> list[str]:
         """All joint names."""
         return list(self.joints.keys())
 
     @property
-    def link_names(self) -> List[str]:
+    def link_names(self) -> list[str]:
         """All link names."""
         return list(self.links.keys())
 
     @property
-    def joint_limits(self) -> Dict[str, JointLimit]:
+    def joint_limits(self) -> dict[str, JointLimit]:
         """Joint limits for actuated joints that have them."""
-        return {
-            j.name: j.limit
-            for j in self._actuated
-            if j.limit is not None
-        }
+        return {j.name: j.limit for j in self._actuated if j.limit is not None}
 
     # ------------------------------------------------------------------
     # Forward kinematics
@@ -485,8 +490,8 @@ class URDF:
     def forward_kinematics(
         self,
         joint_positions: Sequence[float],
-        base_transform: Optional[List[List[float]]] = None,
-    ) -> Dict[str, List[List[float]]]:
+        base_transform: list[list[float]] | None = None,
+    ) -> dict[str, list[list[float]]]:
         """Compute forward kinematics for all links.
 
         Args:
@@ -504,11 +509,11 @@ class URDF:
             )
 
         # Map actuated joint name → position
-        q_map: Dict[str, float] = {}
-        for joint, q in zip(self._actuated, joint_positions):
+        q_map: dict[str, float] = {}
+        for joint, q in zip(self._actuated, joint_positions, strict=True):
             q_map[joint.name] = q
 
-        result: Dict[str, List[List[float]]] = {}
+        result: dict[str, list[list[float]]] = {}
         root_tf = base_transform if base_transform is not None else _identity4()
         self._fk_recurse(self.root, root_tf, q_map, result)
         return result
@@ -516,9 +521,9 @@ class URDF:
     def _fk_recurse(
         self,
         link_name: str,
-        parent_tf: List[List[float]],
-        q_map: Dict[str, float],
-        result: Dict[str, List[List[float]]],
+        parent_tf: list[list[float]],
+        q_map: dict[str, float],
+        result: dict[str, list[list[float]]],
     ) -> None:
         result[link_name] = parent_tf
         for jname in self._children.get(link_name, []):
@@ -544,7 +549,7 @@ class URDF:
         self,
         link_name: str,
         joint_positions: Sequence[float],
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """Get the world-frame position of a single link.
 
         Args:
@@ -560,13 +565,14 @@ class URDF:
         tf = fk[link_name]
         return (tf[0][3], tf[1][3], tf[2][3])
 
-    def link_chain(self, from_link: str, to_link: str) -> List[str]:
+    def link_chain(self, from_link: str, to_link: str) -> list[str]:
         """Find the chain of links from ``from_link`` to ``to_link``.
 
         Walks up from both links to the root, then finds the common ancestor
         and returns the path.
         """
-        def _ancestors(link: str) -> List[str]:
+
+        def _ancestors(link: str) -> list[str]:
             path = [link]
             while link in self._parent_joint:
                 jname = self._parent_joint[link]
@@ -611,16 +617,16 @@ class URDF:
         control_freq_hz: int = 50,
         max_state_dim: int = 64,
         max_action_dim: int = 64,
-    ) -> "RobotConfig":
+    ) -> RobotConfig:
         """Generate a RobotConfig from this URDF.
 
         Uses actuated joints for state/action dims and extracts joint limits.
         """
-        from .config import RobotConfig, JointConfig
+        from .config import JointConfig, RobotConfig
 
         joints = []
         for i, j in enumerate(self._actuated):
-            kw: Dict[str, Any] = {"name": j.name, "index": i}
+            kw: dict[str, Any] = {"name": j.name, "index": i}
             if j.limit is not None:
                 kw["position_min"] = j.limit.lower
                 kw["position_max"] = j.limit.upper
@@ -652,7 +658,7 @@ class URDF:
             f"actuated={self.num_actuated})"
         )
 
-    def print_tree(self, link: Optional[str] = None, indent: int = 0) -> None:
+    def print_tree(self, link: str | None = None, indent: int = 0) -> None:
         """Print the kinematic tree to stdout."""
         if link is None:
             link = self.root
@@ -670,8 +676,4 @@ class URDF:
     @property
     def total_mass(self) -> float:
         """Sum of all link masses."""
-        return sum(
-            link.inertial.mass
-            for link in self.links.values()
-            if link.inertial is not None
-        )
+        return sum(link.inertial.mass for link in self.links.values() if link.inertial is not None)

@@ -21,22 +21,24 @@ import numpy as np
 from .jit import PolicyJitRuntime
 
 try:
-    from tinygrad import Tensor, dtypes
+    from tinygrad import Tensor
+    from tinygrad.engine.jit import TinyJit
     from tinygrad.nn import Linear
     from tinygrad.nn.state import (
         get_parameters,
         get_state_dict,
         load_state_dict,
-        safe_save,
         safe_load,
+        safe_save,
     )
-    from tinygrad.engine.jit import TinyJit
 
     TINYGRAD_AVAILABLE = True
 except ImportError:
     TINYGRAD_AVAILABLE = False
     Tensor = Any
-    TinyJit = lambda x: x  # no-op decorator
+
+    def TinyJit(x):
+        return x  # no-op decorator
 
 
 def _check_tinygrad():
@@ -97,7 +99,7 @@ class Policy:
         safe_save(state, str(path))
 
     @classmethod
-    def load(cls, path: str | Path) -> "Policy":
+    def load(cls, path: str | Path) -> Policy:
         """
         Load policy weights from a safetensors file.
 

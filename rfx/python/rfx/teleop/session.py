@@ -4,12 +4,12 @@ rfx.teleop.session - High-rate SO-101 teleoperation runtime.
 
 from __future__ import annotations
 
-from collections import deque
-from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
 import json
 import threading
 import time
+from collections import deque
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 import numpy as np
@@ -247,7 +247,7 @@ class BimanualSo101Session:
         right_leader_port: str = "/dev/ttyACM2",
         right_follower_port: str = "/dev/ttyACM3",
         **kwargs: Any,
-    ) -> "BimanualSo101Session":
+    ) -> BimanualSo101Session:
         config = TeleopSessionConfig.bimanual(
             left_leader_port=left_leader_port,
             left_follower_port=left_follower_port,
@@ -264,7 +264,7 @@ class BimanualSo101Session:
         leader_port: str = "/dev/ttyACM0",
         follower_port: str = "/dev/ttyACM1",
         **kwargs: Any,
-    ) -> "BimanualSo101Session":
+    ) -> BimanualSo101Session:
         config = TeleopSessionConfig.single_arm_pair(
             name="main",
             leader_port=leader_port,
@@ -530,7 +530,7 @@ class BimanualSo101Session:
                 timestamp_ns=timestamp_ns,
             )
 
-    def __enter__(self) -> "BimanualSo101Session":
+    def __enter__(self) -> BimanualSo101Session:
         self.start()
         return self
 

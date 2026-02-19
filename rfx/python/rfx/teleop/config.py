@@ -4,10 +4,10 @@ rfx.teleop.config - Teleoperation session configuration models.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, is_dataclass
 from pathlib import Path
-from typing import Any, Mapping, Literal, cast
-
+from typing import Any, Literal, cast
 
 TransportBackend = Literal["inproc", "zenoh", "dds"]
 JitBackend = Literal["auto", "cpu", "cuda", "metal"]
@@ -120,7 +120,7 @@ class TeleopSessionConfig:
         right_leader_port: str = "/dev/ttyACM2",
         right_follower_port: str = "/dev/ttyACM3",
         **kwargs: Any,
-    ) -> "TeleopSessionConfig":
+    ) -> TeleopSessionConfig:
         arm_pairs = (
             ArmPairConfig(
                 name="left", leader_port=left_leader_port, follower_port=left_follower_port
@@ -141,7 +141,7 @@ class TeleopSessionConfig:
         leader_port: str = "/dev/ttyACM0",
         follower_port: str = "/dev/ttyACM1",
         **kwargs: Any,
-    ) -> "TeleopSessionConfig":
+    ) -> TeleopSessionConfig:
         arm_pairs = (
             ArmPairConfig(name=name, leader_port=leader_port, follower_port=follower_port),
         )

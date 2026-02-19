@@ -105,10 +105,12 @@ class BaseEnv(ABC):
         """
         pass
 
+    @abstractmethod
     def close(self) -> None:
         """Clean up resources."""
         pass
 
+    @abstractmethod
     def render(self) -> None:
         """Render the environment (optional)."""
         pass
@@ -260,10 +262,10 @@ class Go2Env(BaseEnv):
             self._backend = Go2(config)
             self._backend.connect()
             self._using_rfx_backend = True
-        except ImportError:
+        except ImportError as err:
             raise RuntimeError(
                 "Real robot control requires the rfx Rust extension. Build with: maturin develop"
-            )
+            ) from err
 
     @property
     def observation_space(self) -> Box:
@@ -478,7 +480,7 @@ class VecEnv:
 
     def step(self, actions: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, list]:
         """Step all environments."""
-        results = [env.step(a) for env, a in zip(self.envs, actions)]
+        results = [env.step(a) for env, a in zip(self.envs, actions, strict=False)]
         obs = np.array([r[0] for r in results])
         rewards = np.array([r[1] for r in results])
         dones = np.array([r[2] for r in results])

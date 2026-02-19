@@ -6,7 +6,7 @@ Requires: pip install mujoco mjx jax[cuda]
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import torch
 
@@ -32,20 +32,20 @@ class MjxBackend:
         self.device = device
 
         try:
-            import mujoco
-            from mujoco import mjx
             import jax
             import jax.numpy as jnp
+            import mujoco
+            from mujoco import mjx
 
             self._mujoco = mujoco
             self._mjx = mjx
             self._jax = jax
             self._jnp = jnp
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "MuJoCo MJX not installed. Install with: pip install mujoco mjx jax[cuda]\n"
                 "For testing without MJX, use backend='mock'"
-            )
+            ) from err
 
         if config.urdf_path:
             xml_path = config.urdf_path.replace(".urdf", ".xml")
@@ -92,12 +92,12 @@ class MjxBackend:
     def _torch_to_jax(self, tensor: torch.Tensor):
         return self._jnp.array(tensor.cpu().numpy())
 
-    def observe(self) -> Dict[str, torch.Tensor]:
+    def observe(self) -> dict[str, torch.Tensor]:
         qpos = self._jax_to_torch(self._batched_data.qpos)
         qvel = self._jax_to_torch(self._batched_data.qvel)
         state = torch.cat([qpos, qvel], dim=-1)
         return cast(
-            Dict[str, torch.Tensor],
+            dict[str, torch.Tensor],
             make_observation(
                 state=state,
                 state_dim=self.config.state_dim,
@@ -115,13 +115,13 @@ class MjxBackend:
         self._done = self._step_count >= self._max_steps
         self._reward = torch.zeros(self.num_envs, device=self.device)
 
-    def reset(self, env_ids: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         if env_ids is None:
             env_ids = torch.arange(self.num_envs, device=self.device)
         fresh_data = self._mjx.put_data(self._model, self._data)
         for idx in env_ids.tolist():
             self._batched_data = self._jax.tree_map(
-                lambda batched, fresh: batched.at[idx].set(fresh),
+                lambda batched, fresh, idx=idx: batched.at[idx].set(fresh),
                 self._batched_data,
                 fresh_data,
             )

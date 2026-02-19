@@ -4,15 +4,13 @@ rfx.real.camera - Camera interfaces
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import torch
 
 
 class Camera:
     """USB camera interface using OpenCV."""
 
-    def __init__(self, device_id: int = 0, resolution: Tuple[int, int] = (640, 480), fps: int = 30):
+    def __init__(self, device_id: int = 0, resolution: tuple[int, int] = (640, 480), fps: int = 30):
         self.device_id = device_id
         self.resolution = resolution
         self.fps = fps
@@ -23,8 +21,10 @@ class Camera:
             import cv2
 
             self._cv2 = cv2
-        except ImportError:
-            raise ImportError("OpenCV not installed. Install with: pip install opencv-python")
+        except ImportError as err:
+            raise ImportError(
+                "OpenCV not installed. Install with: pip install opencv-python"
+            ) from err
 
         self._cap = cv2.VideoCapture(self.device_id)
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution[0])
@@ -57,8 +57,8 @@ class RealSenseCamera:
 
     def __init__(
         self,
-        serial_number: Optional[str] = None,
-        resolution: Tuple[int, int] = (640, 480),
+        serial_number: str | None = None,
+        resolution: tuple[int, int] = (640, 480),
         fps: int = 30,
         align_depth: bool = True,
     ):
@@ -71,13 +71,15 @@ class RealSenseCamera:
 
     def _init_camera(self):
         try:
-            import pyrealsense2 as rs
             import numpy as np
+            import pyrealsense2 as rs
 
             self._rs = rs
             self._np = np
-        except ImportError:
-            raise ImportError("pyrealsense2 not installed. Install with: pip install pyrealsense2")
+        except ImportError as err:
+            raise ImportError(
+                "pyrealsense2 not installed. Install with: pip install pyrealsense2"
+            ) from err
 
         self._pipeline = rs.pipeline()
         config = rs.config()
@@ -97,7 +99,7 @@ class RealSenseCamera:
         if self.align_depth:
             self._align = rs.align(rs.stream.color)
 
-    def capture(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def capture(self) -> tuple[torch.Tensor, torch.Tensor]:
         if self._pipeline is None:
             self._init_camera()
 

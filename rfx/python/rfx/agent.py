@@ -28,11 +28,11 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Protocol, Union
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
-from .skills import Skill, SkillRegistry, skill
-
+from .skills import Skill, SkillRegistry
 
 # =============================================================================
 # Completion Result Types
@@ -45,15 +45,15 @@ class ToolCall:
 
     id: str
     name: str
-    arguments: Dict[str, Any]
+    arguments: dict[str, Any]
 
 
 @dataclass
 class CompletionResult:
     """Result from an LLM completion."""
 
-    text: Optional[str]
-    tool_calls: List[ToolCall]
+    text: str | None
+    tool_calls: list[ToolCall]
     raw_response: Any = None
 
 
@@ -73,9 +73,9 @@ class LLMClient(ABC):
     @abstractmethod
     def create_completion(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         system_prompt: str,
-        tools: List[Dict[str, Any]],
+        tools: list[dict[str, Any]],
         model: str,
     ) -> CompletionResult:
         """
@@ -98,7 +98,7 @@ class LLMClient(ABC):
         tool_call: ToolCall,
         result: str,
         is_error: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Format a tool result for the next API call.
 
@@ -113,7 +113,7 @@ class LLMClient(ABC):
         ...
 
     @abstractmethod
-    def format_assistant_message(self, response: Any) -> Dict[str, Any]:
+    def format_assistant_message(self, response: Any) -> dict[str, Any]:
         """Format the assistant's response as a message for conversation history."""
         ...
 
@@ -121,22 +121,22 @@ class LLMClient(ABC):
 class AnthropicClient(LLMClient):
     """LLM client for Anthropic's Claude API."""
 
-    def __init__(self, api_key: Optional[str] = None) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         try:
             import anthropic
 
             self._client = anthropic.Anthropic(api_key=api_key)
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "anthropic package is required for Anthropic models. "
                 "Install with: pip install anthropic"
-            )
+            ) from err
 
     def create_completion(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         system_prompt: str,
-        tools: List[Dict[str, Any]],
+        tools: list[dict[str, Any]],
         model: str,
     ) -> CompletionResult:
         response = self._client.messages.create(
@@ -174,8 +174,8 @@ class AnthropicClient(LLMClient):
         tool_call: ToolCall,
         result: str,
         is_error: bool = False,
-    ) -> Dict[str, Any]:
-        tool_result: Dict[str, Any] = {
+    ) -> dict[str, Any]:
+        tool_result: dict[str, Any] = {
             "type": "tool_result",
             "tool_use_id": tool_call.id,
             "content": result,
@@ -184,28 +184,28 @@ class AnthropicClient(LLMClient):
             tool_result["is_error"] = True
         return tool_result
 
-    def format_assistant_message(self, response: Any) -> Dict[str, Any]:
+    def format_assistant_message(self, response: Any) -> dict[str, Any]:
         return {"role": "assistant", "content": response.raw_response.content}
 
 
 class OpenAIClient(LLMClient):
     """LLM client for OpenAI's API."""
 
-    def __init__(self, api_key: Optional[str] = None) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         try:
             import openai
 
             self._client = openai.OpenAI(api_key=api_key)
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "openai package is required for OpenAI models. Install with: pip install openai"
-            )
+            ) from err
 
     def create_completion(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         system_prompt: str,
-        tools: List[Dict[str, Any]],
+        tools: list[dict[str, Any]],
         model: str,
     ) -> CompletionResult:
         # OpenAI uses system message in messages array
@@ -241,14 +241,14 @@ class OpenAIClient(LLMClient):
         tool_call: ToolCall,
         result: str,
         is_error: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "role": "tool",
             "tool_call_id": tool_call.id,
             "content": result,
         }
 
-    def format_assistant_message(self, response: Any) -> Dict[str, Any]:
+    def format_assistant_message(self, response: Any) -> dict[str, Any]:
         return response.raw_response.choices[0].message
 
 
@@ -263,7 +263,7 @@ class AgentConfig:
 
     # Model settings
     model: str = "claude-sonnet-4-20250514"
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     # System prompt
     system_prompt: str = """You are a robot control assistant. You help users control a quadruped robot using available skills.
@@ -309,10 +309,10 @@ class Agent:
     def __init__(
         self,
         model: str = "claude-sonnet-4-20250514",
-        skills: Optional[List[Union[Skill, Callable[..., Any]]]] = None,
-        robot: Optional[Any] = None,
-        config: Optional[AgentConfig] = None,
-        api_key: Optional[str] = None,
+        skills: list[Skill | Callable[..., Any]] | None = None,
+        robot: Any | None = None,
+        config: AgentConfig | None = None,
+        api_key: str | None = None,
     ) -> None:
         self.config = config or AgentConfig(model=model, api_key=api_key)
         self.robot = robot
@@ -327,7 +327,7 @@ class Agent:
         self._api_type = self._detect_api_type(self.config.model)
 
         # LLM client will be initialized lazily
-        self._llm_client: Optional[LLMClient] = None
+        self._llm_client: LLMClient | None = None
 
     def _detect_api_type(self, model: str) -> str:
         """Detect which API to use based on model name."""
@@ -359,7 +359,7 @@ class Agent:
 
     # Legacy property for backward compatibility
     @property
-    def _client(self) -> Optional[Any]:
+    def _client(self) -> Any | None:
         """Legacy accessor for raw client. Use _get_client() instead."""
         if self._llm_client is None:
             return None
@@ -379,7 +379,7 @@ class Agent:
             client._client = value
             self._llm_client = client
 
-    def add_skill(self, skill_or_func: Union[Skill, Callable[..., Any]], **kwargs: Any) -> Skill:
+    def add_skill(self, skill_or_func: Skill | Callable[..., Any], **kwargs: Any) -> Skill:
         """Add a skill to the agent."""
         return self.registry.register(skill_or_func, **kwargs)
 
@@ -401,9 +401,9 @@ class Agent:
         else:
             tools = self.registry.to_tools()
 
-        messages: List[Dict[str, Any]] = [{"role": "user", "content": command}]
+        messages: list[dict[str, Any]] = [{"role": "user", "content": command}]
         tool_calls_made = 0
-        results: List[str] = []
+        results: list[str] = []
 
         while tool_calls_made < self.config.max_tool_calls:
             completion = client.create_completion(
@@ -418,7 +418,7 @@ class Agent:
                 return completion.text or "Done."
 
             # Execute tool calls
-            tool_results: List[Dict[str, Any]] = []
+            tool_results: list[dict[str, Any]] = []
             for tool_call in completion.tool_calls:
                 tool_calls_made += 1
 
@@ -467,14 +467,14 @@ class MockAgent:
 
     def __init__(
         self,
-        skills: Optional[List[Union[Skill, Callable[..., Any]]]] = None,
+        skills: list[Skill | Callable[..., Any]] | None = None,
     ) -> None:
         self.registry = SkillRegistry()
         if skills:
             for s in skills:
                 self.registry.register(s)
 
-    def add_skill(self, skill_or_func: Union[Skill, Callable[..., Any]], **kwargs: Any) -> Skill:
+    def add_skill(self, skill_or_func: Skill | Callable[..., Any], **kwargs: Any) -> Skill:
         """Add a skill to the agent."""
         return self.registry.register(skill_or_func, **kwargs)
 

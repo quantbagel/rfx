@@ -4,11 +4,11 @@ rfx.sim.base - Base class for simulation robots
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional, Union
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ..robot import RobotBase
 from ..config import RobotConfig
+from ..robot import RobotBase
 
 if TYPE_CHECKING:
     import torch
@@ -26,7 +26,7 @@ class SimRobot(RobotBase):
 
     def __init__(
         self,
-        config: Union[str, Path, RobotConfig, Dict],
+        config: str | Path | RobotConfig | dict,
         num_envs: int = 1,
         backend: str = "mock",
         device: str = "cuda",
@@ -75,19 +75,19 @@ class SimRobot(RobotBase):
     def config(self) -> RobotConfig:
         return self._config
 
-    def observe(self) -> Dict[str, "torch.Tensor"]:
+    def observe(self) -> dict[str, torch.Tensor]:
         return self._backend.observe()
 
-    def act(self, action: "torch.Tensor") -> None:
+    def act(self, action: torch.Tensor) -> None:
         self._backend.act(action)
 
-    def reset(self, env_ids: Optional["torch.Tensor"] = None) -> Dict[str, "torch.Tensor"]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         return self._backend.reset(env_ids)
 
-    def get_reward(self) -> "torch.Tensor":
+    def get_reward(self) -> torch.Tensor:
         return self._backend.get_reward()
 
-    def get_done(self) -> "torch.Tensor":
+    def get_done(self) -> torch.Tensor:
         return self._backend.get_done()
 
     def render(self) -> None:
@@ -103,12 +103,12 @@ class SimRobot(RobotBase):
     @classmethod
     def from_config(
         cls,
-        config_path: Union[str, Path],
+        config_path: str | Path,
         num_envs: int = 1,
         backend: str = "mock",
         device: str = None,
         **kwargs,
-    ) -> "SimRobot":
+    ) -> SimRobot:
         if device is None:
             import torch
 

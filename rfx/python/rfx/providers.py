@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
-from typing import Dict, Iterable
 
 _PROVIDERS = {
     "sim": "rfx_sim",
@@ -18,13 +17,13 @@ _PROVIDERS = {
 }
 
 
-def available_providers() -> Dict[str, bool]:
+def available_providers() -> dict[str, bool]:
     return {
         name: importlib.util.find_spec(module) is not None for name, module in _PROVIDERS.items()
     }
 
 
-def use(*providers: str, strict: bool = False) -> Dict[str, bool]:
+def use(*providers: str, strict: bool = False) -> dict[str, bool]:
     """
     Load extension provider packages from the main `rfx` namespace.
 
@@ -35,7 +34,7 @@ def use(*providers: str, strict: bool = False) -> Dict[str, bool]:
     if not providers:
         providers = tuple(_PROVIDERS.keys())
 
-    loaded: Dict[str, bool] = {}
+    loaded: dict[str, bool] = {}
     for name in providers:
         if name not in _PROVIDERS:
             raise ValueError(f"Unknown provider '{name}'. Valid providers: {sorted(_PROVIDERS)}")

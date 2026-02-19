@@ -6,14 +6,14 @@ Requires: pip install genesis-world
 
 from __future__ import annotations
 
-from pathlib import Path
-import inspect
 import importlib.util
+import inspect
 import os
 import shutil
 import subprocess
 import sys
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
 import torch
 
@@ -133,7 +133,7 @@ class GenesisBackend:
             "Try manually: uv pip install genesis-world\n" + joined_errors
         )
 
-    def _init_genesis_runtime(self, kwargs: Dict[str, Any]) -> None:
+    def _init_genesis_runtime(self, kwargs: dict[str, Any]) -> None:
         backend_override = kwargs.get("genesis_backend")
         if backend_override is not None:
             backend = backend_override
@@ -144,7 +144,7 @@ class GenesisBackend:
             if backend is None:
                 backend = getattr(self._gs, "cpu", None)
 
-        init_kwargs: Dict[str, Any] = {}
+        init_kwargs: dict[str, Any] = {}
         if backend is not None:
             init_kwargs["backend"] = backend
 
@@ -155,10 +155,10 @@ class GenesisBackend:
             if "already" not in str(exc).lower():
                 raise
 
-    def _build_scene(self, kwargs: Dict[str, Any]) -> None:
+    def _build_scene(self, kwargs: dict[str, Any]) -> None:
         sim_options = self._build_sim_options()
 
-        scene_kwargs: Dict[str, Any] = {"sim_options": sim_options}
+        scene_kwargs: dict[str, Any] = {"sim_options": sim_options}
         scene_sig = self._safe_signature(self._gs.Scene)
         if scene_sig is not None and self._viewer_enabled:
             if "show_viewer" in scene_sig.parameters:
@@ -178,7 +178,7 @@ class GenesisBackend:
     def _build_sim_options(self) -> Any:
         options_ctor = self._gs.options.SimOptions
         sig = self._safe_signature(options_ctor)
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         if sig is not None:
             if "dt" in sig.parameters:
                 kwargs["dt"] = self._dt
@@ -191,7 +191,7 @@ class GenesisBackend:
         except TypeError:
             return options_ctor(dt=self._dt, substeps=self._substeps)
 
-    def _build_robot_morph(self, kwargs: Dict[str, Any]) -> Any:
+    def _build_robot_morph(self, kwargs: dict[str, Any]) -> Any:
         urdf_path = kwargs.get("urdf_path", self.config.urdf_path)
         if urdf_path:
             resolved = self._resolve_asset_path(str(urdf_path))
@@ -255,7 +255,7 @@ class GenesisBackend:
                 return "dofs_idx"
         return "dofs_idx_local"
 
-    def observe(self) -> Dict[str, torch.Tensor]:
+    def observe(self) -> dict[str, torch.Tensor]:
         positions = self._normalize_batch(
             self._get_robot_dof_tensor(("get_dofs_position", "get_dof_positions"))
         )
@@ -264,7 +264,7 @@ class GenesisBackend:
         )
         state = torch.cat([positions, velocities], dim=-1)
         return cast(
-            Dict[str, torch.Tensor],
+            dict[str, torch.Tensor],
             make_observation(
                 state=state,
                 state_dim=self.config.state_dim,
@@ -293,7 +293,7 @@ class GenesisBackend:
         self._done = self._step_count >= self._max_steps
         self._reward.zero_()
 
-    def reset(self, env_ids: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         if env_ids is None:
             env_ids = torch.arange(self.num_envs, device=self.device, dtype=torch.long)
         elif env_ids.dtype != torch.long:

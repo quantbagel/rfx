@@ -4,13 +4,13 @@ rfx.teleop.transport - Zenoh-style in-process transport primitives.
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass, field
-from fnmatch import fnmatchcase
 import json
 import threading
 import time
-from typing import Any, Protocol, TYPE_CHECKING
+from collections import deque
+from dataclasses import dataclass, field
+from fnmatch import fnmatchcase
+from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from .config import TransportConfig
@@ -304,7 +304,7 @@ def rust_transport_available() -> bool:
     return _RustTransport is not None
 
 
-def create_transport(config: "TransportConfig") -> TransportLike:
+def create_transport(config: TransportConfig) -> TransportLike:
     """
     Resolve a concrete transport backend from teleop TransportConfig.
 
@@ -331,8 +331,7 @@ def create_transport(config: "TransportConfig") -> TransportLike:
 
     if backend == "dds":
         raise NotImplementedError(
-            "Transport backend 'dds' is declared but not wired yet. "
-            "Use backend='inproc' for now."
+            "Transport backend 'dds' is declared but not wired yet. Use backend='inproc' for now."
         )
 
     raise ValueError(

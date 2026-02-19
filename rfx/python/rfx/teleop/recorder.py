@@ -4,12 +4,13 @@ rfx.teleop.recorder - High-rate episode recorder with LeRobot-style metadata.
 
 from __future__ import annotations
 
+import json
+import threading
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
-import json
 from pathlib import Path
-import threading
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 

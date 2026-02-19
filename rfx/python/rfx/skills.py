@@ -24,8 +24,12 @@ from __future__ import annotations
 
 import inspect
 import re
+import warnings
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, get_type_hints
+from typing import Any, TypeVar, get_type_hints
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -40,11 +44,11 @@ class ParsedDocstring:
     """Parsed docstring components."""
 
     description: str
-    params: Dict[str, str]  # param_name -> description
-    returns: Optional[str] = None
+    params: dict[str, str]  # param_name -> description
+    returns: str | None = None
 
 
-def _parse_docstring(docstring: Optional[str]) -> ParsedDocstring:
+def _parse_docstring(docstring: str | None) -> ParsedDocstring:
     """
     Parse a docstring to extract description and parameter documentation.
 
@@ -85,14 +89,14 @@ def _parse_docstring(docstring: Optional[str]) -> ParsedDocstring:
         return ParsedDocstring(description="", params={})
 
     lines = docstring.strip().split("\n")
-    description_lines: List[str] = []
-    params: Dict[str, str] = {}
-    returns: Optional[str] = None
+    description_lines: list[str] = []
+    params: dict[str, str] = {}
+    returns: str | None = None
 
     # State machine for parsing
     state = "description"
-    current_param: Optional[str] = None
-    current_param_desc: List[str] = []
+    current_param: str | None = None
+    current_param_desc: list[str] = []
 
     # Patterns for different docstring styles
     google_args_pattern = re.compile(r"^\s*Args:\s*$", re.IGNORECASE)
@@ -225,16 +229,16 @@ class Skill:
     name: str
     description: str
     func: Callable[..., Any]
-    parameters: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    required: List[str] = field(default_factory=list)
-    returns: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    parameters: dict[str, dict[str, Any]] = field(default_factory=dict)
+    required: list[str] = field(default_factory=list)
+    returns: str | None = None
+    tags: list[str] = field(default_factory=list)
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Execute the skill."""
         return self.func(*args, **kwargs)
 
-    def to_tool(self) -> Dict[str, Any]:
+    def to_tool(self) -> dict[str, Any]:
         """Convert to OpenAI/Anthropic tool format."""
         return {
             "type": "function",
@@ -249,7 +253,7 @@ class Skill:
             },
         }
 
-    def to_anthropic_tool(self) -> Dict[str, Any]:
+    def to_anthropic_tool(self) -> dict[str, Any]:
         """Convert to Anthropic tool format."""
         return {
             "name": self.name,
@@ -264,8 +268,8 @@ class Skill:
 
 def _extract_parameters(
     func: Callable[..., Any],
-    parsed_docstring: Optional[ParsedDocstring] = None,
-) -> Tuple[Dict[str, Dict[str, Any]], List[str]]:
+    parsed_docstring: ParsedDocstring | None = None,
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
     """
     Extract parameter information from function signature, type hints, and docstring.
 
@@ -283,14 +287,14 @@ def _extract_parameters(
     if parsed_docstring is None:
         parsed_docstring = _parse_docstring(func.__doc__)
 
-    parameters: Dict[str, Dict[str, Any]] = {}
-    required: List[str] = []
+    parameters: dict[str, dict[str, Any]] = {}
+    required: list[str] = []
 
     for name, param in sig.parameters.items():
         if name in ("self", "cls"):
             continue
 
-        param_info: Dict[str, Any] = {}
+        param_info: dict[str, Any] = {}
 
         # Get type hint
         if name in hints:
@@ -337,13 +341,13 @@ def _python_type_to_json_type(hint: Any) -> str:
         return "string"
 
 
-def skill(
-    func: Optional[F] = None,
+def skill[F: Callable[..., Any]](
+    func: F | None = None,
     *,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    tags: Optional[List[str]] = None,
-) -> Union[Skill, Callable[[F], Skill]]:
+    name: str | None = None,
+    description: str | None = None,
+    tags: list[str] | None = None,
+) -> Skill | Callable[[F], Skill]:
     """
     Decorator to mark a function as a skill for LLM agents.
 
@@ -408,9 +412,9 @@ class SkillRegistry:
     """Registry for managing skills available to LLM agents."""
 
     def __init__(self) -> None:
-        self._skills: Dict[str, Skill] = {}
+        self._skills: dict[str, Skill] = {}
 
-    def register(self, skill_or_func: Union[Skill, Callable[..., Any]], **kwargs: Any) -> Skill:
+    def register(self, skill_or_func: Skill | Callable[..., Any], **kwargs: Any) -> Skill:
         """
         Register a skill or function.
 
@@ -432,11 +436,11 @@ class SkillRegistry:
         self._skills[s.name] = s
         return s
 
-    def unregister(self, name: str) -> Optional[Skill]:
+    def unregister(self, name: str) -> Skill | None:
         """Remove a skill from the registry."""
         return self._skills.pop(name, None)
 
-    def get(self, name: str) -> Optional[Skill]:
+    def get(self, name: str) -> Skill | None:
         """Get a skill by name."""
         return self._skills.get(name)
 
@@ -457,15 +461,15 @@ class SkillRegistry:
         return len(self._skills)
 
     @property
-    def skills(self) -> List[Skill]:
+    def skills(self) -> list[Skill]:
         """List all registered skills."""
         return list(self._skills.values())
 
-    def to_tools(self) -> List[Dict[str, Any]]:
+    def to_tools(self) -> list[dict[str, Any]]:
         """Convert all skills to OpenAI tool format."""
         return [s.to_tool() for s in self._skills.values()]
 
-    def to_anthropic_tools(self) -> List[Dict[str, Any]]:
+    def to_anthropic_tools(self) -> list[dict[str, Any]]:
         """Convert all skills to Anthropic tool format."""
         return [s.to_anthropic_tool() for s in self._skills.values()]
 
@@ -476,7 +480,7 @@ class SkillRegistry:
             raise KeyError(f"Unknown skill: {name}")
         return skill(**kwargs)
 
-    def filter_by_tag(self, tag: str) -> List[Skill]:
+    def filter_by_tag(self, tag: str) -> list[Skill]:
         """Get skills with a specific tag."""
         return [s for s in self._skills.values() if tag in s.tags]
 
@@ -500,17 +504,11 @@ class SkillRegistry:
 # Context-Scoped Registry
 # =============================================================================
 
-import warnings
-from contextvars import ContextVar, Token
-from contextlib import contextmanager
-from typing import Iterator
-
-
 # Context variable for async-safe registry scoping
-_registry_context: ContextVar[Optional[SkillRegistry]] = ContextVar("skill_registry", default=None)
+_registry_context: ContextVar[SkillRegistry | None] = ContextVar("skill_registry", default=None)
 
 # Legacy global registry (deprecated)
-_global_registry: Optional[SkillRegistry] = None
+_global_registry: SkillRegistry | None = None
 
 
 def _get_or_create_global() -> SkillRegistry:
@@ -522,7 +520,7 @@ def _get_or_create_global() -> SkillRegistry:
 
 
 @contextmanager
-def skill_registry_context(registry: Optional[SkillRegistry] = None) -> Iterator[SkillRegistry]:
+def skill_registry_context(registry: SkillRegistry | None = None) -> Iterator[SkillRegistry]:
     """
     Context manager for scoped skill registry access.
 

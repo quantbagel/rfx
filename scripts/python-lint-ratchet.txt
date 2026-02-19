@@ -1,6 +1,5 @@
 # Files that currently pass full Ruff checks.
 # This list is an intentional ratchet: new files can be added as they are cleaned up.
-rfx/examples/agent_control.py
 rfx/examples/teleop_record.py
 rfx/python/rfx/jit.py
 rfx/python/rfx/real/__init__.py

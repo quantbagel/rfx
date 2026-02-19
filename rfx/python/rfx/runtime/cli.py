@@ -4,10 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
+from .packages import discover_packages
 from .registry import load_registry
 from .runner import launch, run_node
-from .packages import discover_packages
-
 
 TEMPLATE_MANIFEST = """\
 [package]

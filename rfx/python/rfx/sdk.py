@@ -7,9 +7,9 @@ Goal: one simple API across simulation and real hardware backends.
 from __future__ import annotations
 
 import math
-from pathlib import Path
 from dataclasses import dataclass
-from typing import Any, Dict, Literal, Optional, Union
+from pathlib import Path
+from typing import Any, Literal
 
 from .config import GO2_CONFIG, SO101_CONFIG
 from .envs import Go2Env
@@ -163,7 +163,7 @@ class UniversalRobot:
         )
 
 
-def _default_config_for(robot: RobotName) -> Dict[str, Any]:
+def _default_config_for(robot: RobotName) -> dict[str, Any]:
     if robot == "go2":
         return GO2_CONFIG.to_dict()
     return SO101_CONFIG.to_dict()
@@ -172,12 +172,12 @@ def _default_config_for(robot: RobotName) -> Dict[str, Any]:
 def connect(
     robot: RobotName = "go2",
     backend: BackendName = "mock",
-    config: Optional[Union[str, Path, Dict[str, Any]]] = None,
+    config: str | Path | dict[str, Any] | None = None,
     *,
     num_envs: int = 1,
     device: str = "cpu",
-    dds_backend: Optional[str] = None,
-    zenoh_endpoint: Optional[str] = None,
+    dds_backend: str | None = None,
+    zenoh_endpoint: str | None = None,
     **kwargs,
 ) -> UniversalRobot:
     """
@@ -214,7 +214,7 @@ def connect(
         use_providers("go2")
 
     if config is None:
-        config_payload: Union[Path, Dict[str, Any]] = _default_config_for(robot)
+        config_payload: Path | dict[str, Any] = _default_config_for(robot)
     elif isinstance(config, dict):
         config_payload = config
     else:

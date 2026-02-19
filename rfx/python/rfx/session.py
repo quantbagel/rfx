@@ -14,11 +14,12 @@ Example:
 
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Callable, Dict
+from collections import deque
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -77,8 +78,8 @@ class Session:
 
     def __init__(
         self,
-        robot: "Robot",
-        policy: Callable[[Dict[str, "torch.Tensor"]], "torch.Tensor"],
+        robot: Robot,
+        policy: Callable[[dict[str, torch.Tensor]], torch.Tensor],
         rate_hz: float = 50,
         warmup_s: float = 0.5,
     ) -> None:
@@ -246,7 +247,7 @@ class Session:
                 # Fell behind — reset deadline to avoid burst catch-up
                 next_deadline = time.perf_counter()
 
-    def __enter__(self) -> "Session":
+    def __enter__(self) -> Session:
         self.start()
         return self
 
@@ -255,8 +256,8 @@ class Session:
 
 
 def run(
-    robot: "Robot",
-    policy: Callable[[Dict[str, "torch.Tensor"]], "torch.Tensor"],
+    robot: Robot,
+    policy: Callable[[dict[str, torch.Tensor]], torch.Tensor],
     rate_hz: float = 50,
     duration: float | None = None,
     warmup_s: float = 0.5,

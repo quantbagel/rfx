@@ -37,8 +37,8 @@ except ImportError:
     Tensor = object
 
 if TYPE_CHECKING:
-    from rfx.nn import ActorCritic, Policy
     from rfx.envs import BaseEnv
+    from rfx.nn import ActorCritic, Policy
 
 
 def _check_tinygrad():
@@ -142,8 +142,8 @@ class Rollout:
 
 
 def collect_rollout(
-    env: "BaseEnv",
-    policy: "Policy",
+    env: BaseEnv,
+    policy: Policy,
     steps: int,
     deterministic: bool = False,
 ) -> Rollout:
@@ -240,7 +240,7 @@ class PPOTrainer:
 
     def __init__(
         self,
-        policy: "ActorCritic",
+        policy: ActorCritic,
         lr: float = 3e-4,
         gamma: float = 0.99,
         gae_lambda: float = 0.95,
@@ -290,11 +290,11 @@ class PPOTrainer:
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         # Convert to tensors
-        obs = Tensor(rollout.observations.astype(np.float32))
-        actions = Tensor(rollout.actions.astype(np.float32))
-        old_log_probs = Tensor(rollout.log_probs.astype(np.float32))
-        advantages_t = Tensor(advantages.astype(np.float32))
-        returns_t = Tensor(returns.astype(np.float32))
+        Tensor(rollout.observations.astype(np.float32))
+        Tensor(rollout.actions.astype(np.float32))
+        Tensor(rollout.log_probs.astype(np.float32))
+        Tensor(advantages.astype(np.float32))
+        Tensor(returns.astype(np.float32))
 
         num_samples = rollout.num_steps
         metrics = {

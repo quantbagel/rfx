@@ -190,17 +190,14 @@ fn zenoh_command_writer(
 
     while connected.load(Ordering::Relaxed) {
         // Check for low commands
-        match low_cmd_rx.recv_timeout(Duration::from_micros(500)) {
-            Ok(Some(cmd)) => {
-                let cdr_bytes = cmd.to_cdr_bytes();
-                if let Err(e) = session
-                    .put("rt/lowcmd", ZBytes::from(cdr_bytes))
-                    .wait()
-                {
-                    tracing::warn!("Failed to publish low cmd via Zenoh: {e}");
-                }
+        if let Ok(Some(cmd)) = low_cmd_rx.recv_timeout(Duration::from_micros(500)) {
+            let cdr_bytes = cmd.to_cdr_bytes();
+            if let Err(e) = session
+                .put("rt/lowcmd", ZBytes::from(cdr_bytes))
+                .wait()
+            {
+                tracing::warn!("Failed to publish low cmd via Zenoh: {e}");
             }
-            Ok(None) | Err(_) => {}
         }
 
         // Check for sport commands

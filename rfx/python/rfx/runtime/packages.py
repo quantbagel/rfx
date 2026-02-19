@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import importlib
-from pathlib import Path
 import sys
-from typing import Any
-
 import tomllib
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 
 @dataclass

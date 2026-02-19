@@ -4,13 +4,13 @@ rfx.sim.mock - Mock simulation backend for testing
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import torch
 
-from ..robot import RobotBase
 from ..config import RobotConfig
 from ..observation import make_observation
+from ..robot import RobotBase
 
 if TYPE_CHECKING:
     pass
@@ -38,10 +38,10 @@ class MockBackend:
         self._done = torch.zeros(num_envs, dtype=torch.bool, device=device)
         self._reward = torch.zeros(num_envs, device=device)
 
-    def observe(self) -> Dict[str, torch.Tensor]:
+    def observe(self) -> dict[str, torch.Tensor]:
         state = torch.cat([self._positions, self._velocities], dim=-1)
         return cast(
-            Dict[str, torch.Tensor],
+            dict[str, torch.Tensor],
             make_observation(
                 state=state,
                 state_dim=self.config.state_dim,
@@ -63,7 +63,7 @@ class MockBackend:
         self._done = self._step_count >= self._max_steps
         self._reward = -torch.norm(error, dim=-1)
 
-    def reset(self, env_ids: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         if env_ids is None:
             env_ids = torch.arange(self.num_envs, device=self.device)
         self._positions[env_ids] = 0.0
@@ -102,13 +102,13 @@ class MockRobot(RobotBase):
         )
         self._backend = MockBackend(config, num_envs=num_envs, device=device, **kwargs)
 
-    def observe(self) -> Dict[str, torch.Tensor]:
+    def observe(self) -> dict[str, torch.Tensor]:
         return self._backend.observe()
 
     def act(self, action: torch.Tensor) -> None:
         self._backend.act(action)
 
-    def reset(self, env_ids: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+    def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
         return self._backend.reset(env_ids)
 
     def get_reward(self) -> torch.Tensor:

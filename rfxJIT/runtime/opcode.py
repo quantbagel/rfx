@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 from rfxJIT.kernels.ir import DType, OpCode, TensorSpec
 from rfxJIT.kernels.lowering import LoweredKernel, LoweredOp
@@ -21,7 +22,7 @@ class OpcodeInstruction:
     const_value: float | None = None
 
     @classmethod
-    def from_lowered(cls, op: LoweredOp) -> "OpcodeInstruction":
+    def from_lowered(cls, op: LoweredOp) -> OpcodeInstruction:
         return cls(
             opcode=op.op.value,
             out_slot=op.out_slot,
@@ -46,7 +47,7 @@ class OpcodeInstruction:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "OpcodeInstruction":
+    def from_dict(cls, payload: Mapping[str, Any]) -> OpcodeInstruction:
         return cls(
             opcode=str(payload["opcode"]),
             out_slot=int(payload["out_slot"]),
@@ -71,7 +72,7 @@ class OpcodeKernel:
     instructions: tuple[OpcodeInstruction, ...]
 
     @classmethod
-    def from_lowered(cls, kernel: LoweredKernel) -> "OpcodeKernel":
+    def from_lowered(cls, kernel: LoweredKernel) -> OpcodeKernel:
         return cls(
             version=OPCODE_TAPE_VERSION,
             name=kernel.name,
@@ -114,7 +115,7 @@ class OpcodeKernel:
         }
 
     @classmethod
-    def from_dict(cls, payload: Mapping[str, Any]) -> "OpcodeKernel":
+    def from_dict(cls, payload: Mapping[str, Any]) -> OpcodeKernel:
         input_specs = tuple(
             TensorSpec(
                 name=str(spec["name"]),

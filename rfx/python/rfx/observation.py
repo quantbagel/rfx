@@ -5,7 +5,7 @@ rfx.observation - Multi-modal observation handling
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import torch
@@ -17,9 +17,9 @@ class ObservationSpec:
 
     state_dim: int
     max_state_dim: int = 64
-    image_shape: Optional[tuple] = None
+    image_shape: tuple | None = None
     num_cameras: int = 0
-    language_dim: Optional[int] = None
+    language_dim: int | None = None
 
     @property
     def has_images(self) -> bool:
@@ -31,13 +31,13 @@ class ObservationSpec:
 
 
 def make_observation(
-    state: "torch.Tensor",
+    state: torch.Tensor,
     state_dim: int,
     max_state_dim: int,
-    images: Optional["torch.Tensor"] = None,
-    language: Optional["torch.Tensor"] = None,
+    images: torch.Tensor | None = None,
+    language: torch.Tensor | None = None,
     device: str = "cpu",
-) -> Dict[str, "torch.Tensor"]:
+) -> dict[str, torch.Tensor]:
     """Create a properly formatted observation dictionary."""
     import torch
 
@@ -51,7 +51,7 @@ def make_observation(
     else:
         state_padded = state[:, :max_state_dim]
 
-    obs: Dict[str, torch.Tensor] = {"state": state_padded.to(device)}
+    obs: dict[str, torch.Tensor] = {"state": state_padded.to(device)}
 
     if images is not None:
         obs["images"] = images.to(device)
@@ -61,7 +61,7 @@ def make_observation(
     return obs
 
 
-def unpad_action(action: "torch.Tensor", action_dim: int) -> "torch.Tensor":
+def unpad_action(action: torch.Tensor, action_dim: int) -> torch.Tensor:
     """Extract actual action from padded tensor."""
     if action.dim() == 2:
         return action[:, :action_dim]
@@ -76,17 +76,15 @@ class ObservationBuffer:
     """Buffer for storing observation history (for frame stacking)."""
 
     capacity: int
-    _buffer: List[Dict[str, "torch.Tensor"]] = field(default_factory=list)
+    _buffer: list[dict[str, torch.Tensor]] = field(default_factory=list)
 
-    def push(self, obs: Dict[str, "torch.Tensor"]) -> None:
-        import torch
-
+    def push(self, obs: dict[str, torch.Tensor]) -> None:
         obs_copy = {k: v.clone() for k, v in obs.items()}
         self._buffer.append(obs_copy)
         if len(self._buffer) > self.capacity:
             self._buffer.pop(0)
 
-    def get_stacked(self) -> Dict[str, "torch.Tensor"]:
+    def get_stacked(self) -> dict[str, torch.Tensor]:
         import torch
 
         if not self._buffer:

@@ -31,7 +31,7 @@ class PaddingConfig:
             )
 
 
-def pad_state(state: "torch.Tensor", state_dim: int, max_state_dim: int) -> "torch.Tensor":
+def pad_state(state: torch.Tensor, state_dim: int, max_state_dim: int) -> torch.Tensor:
     """Pad state tensor to max_state_dim."""
     import torch
 
@@ -52,7 +52,7 @@ def pad_state(state: "torch.Tensor", state_dim: int, max_state_dim: int) -> "tor
         raise ValueError(f"Expected 2D or 3D tensor, got {state.dim()}D")
 
 
-def pad_action(action: "torch.Tensor", action_dim: int, max_action_dim: int) -> "torch.Tensor":
+def pad_action(action: torch.Tensor, action_dim: int, max_action_dim: int) -> torch.Tensor:
     """Pad action tensor to max_action_dim."""
     import torch
 
@@ -73,6 +73,6 @@ def pad_action(action: "torch.Tensor", action_dim: int, max_action_dim: int) -> 
         raise ValueError(f"Expected 2D or 3D tensor, got {action.dim()}D")
 
 
-def unpad_action(action: "torch.Tensor", action_dim: int) -> "torch.Tensor":
+def unpad_action(action: torch.Tensor, action_dim: int) -> torch.Tensor:
     """Extract actual action from padded tensor."""
     return action[..., :action_dim]

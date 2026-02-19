@@ -4,10 +4,10 @@ rfx.config - Configuration loading and multi-embodiment support
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-import os
+from typing import Any
 
 
 @dataclass
@@ -18,10 +18,10 @@ class CameraConfig:
     width: int = 640
     height: int = 480
     fps: int = 30
-    device_id: Union[int, str] = 0
+    device_id: int | str = 0
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "CameraConfig":
+    def from_dict(cls, d: dict[str, Any]) -> CameraConfig:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
@@ -37,7 +37,7 @@ class JointConfig:
     effort_max: float = 100.0
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "JointConfig":
+    def from_dict(cls, d: dict[str, Any]) -> JointConfig:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
@@ -60,18 +60,18 @@ class RobotConfig:
     """
 
     name: str = "robot"
-    urdf_path: Optional[str] = None
+    urdf_path: str | None = None
     state_dim: int = 12
     action_dim: int = 6
     max_state_dim: int = 64
     max_action_dim: int = 64
-    cameras: List[CameraConfig] = field(default_factory=list)
-    joints: List[JointConfig] = field(default_factory=list)
+    cameras: list[CameraConfig] = field(default_factory=list)
+    joints: list[JointConfig] = field(default_factory=list)
     control_freq_hz: int = 50
-    hardware: Dict[str, Any] = field(default_factory=dict)
+    hardware: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "RobotConfig":
+    def from_dict(cls, d: dict[str, Any]) -> RobotConfig:
         cameras = [CameraConfig.from_dict(c) for c in d.pop("cameras", [])]
         joints = [JointConfig.from_dict(j) for j in d.pop("joints", [])]
         valid_keys = cls.__dataclass_fields__.keys()
@@ -79,7 +79,7 @@ class RobotConfig:
         return cls(cameras=cameras, joints=joints, **filtered)
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path]) -> "RobotConfig":
+    def from_yaml(cls, path: str | Path) -> RobotConfig:
         import yaml  # type: ignore[import-untyped]
 
         path = Path(path)
@@ -95,7 +95,7 @@ class RobotConfig:
             data = yaml.safe_load(f)
         return cls.from_dict(data)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "urdf_path": self.urdf_path,
@@ -110,7 +110,7 @@ class RobotConfig:
         }
 
 
-def _get_config_search_paths() -> List[Path]:
+def _get_config_search_paths() -> list[Path]:
     paths = [Path.cwd()]
     package_dir = Path(__file__).parent.parent.parent
     paths.append(package_dir / "configs")
@@ -119,7 +119,7 @@ def _get_config_search_paths() -> List[Path]:
     return paths
 
 
-def load_config(config_path: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
+def load_config(config_path: str | Path | dict[str, Any]) -> dict[str, Any]:
     if isinstance(config_path, dict):
         return config_path
     config = RobotConfig.from_yaml(config_path)
