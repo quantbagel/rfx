@@ -87,7 +87,7 @@ class MjxBackend:
     def _jax_to_torch(self, arr) -> torch.Tensor:
         import numpy as np
 
-        return torch.from_numpy(np.asarray(arr)).to(self.device)
+        return torch.from_numpy(np.array(arr)).to(self.device)
 
     def _torch_to_jax(self, tensor: torch.Tensor):
         return self._jnp.array(tensor.cpu().numpy())
