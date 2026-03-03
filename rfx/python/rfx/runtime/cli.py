@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # deploy
 # ---------------------------------------------------------------------------
@@ -142,69 +141,211 @@ def cmd_train(args: argparse.Namespace) -> int:
 
 def cmd_doctor(_args: argparse.Namespace) -> int:
     """Check system setup."""
+    import importlib.util
+    import os
+    import platform
     import shutil
 
-    checks = [
-        ("python", shutil.which("python3") or shutil.which("python")),
-        ("cargo", shutil.which("cargo")),
-        ("uv", shutil.which("uv")),
-    ]
-
-    # Check Python imports
-    optional_imports = [
-        ("torch", "PyTorch (policy inference)"),
-        ("tinygrad", "tinygrad (lightweight policies)"),
-        ("numpy", "NumPy"),
-        ("yaml", "PyYAML (config loading)"),
-    ]
-
-    print("[rfx] System check\n")
-
     all_ok = True
-    for name, path in checks:
-        status = "ok" if path else "missing"
-        if not path:
-            all_ok = False
-        print(f"  {name:12s}  {status:8s}  {path or ''}")
 
+    def _ok(label: str, detail: str = "") -> None:
+        suffix = f"  {detail}" if detail else ""
+        print(f"  {label:36s}  ok{suffix}")
+
+    def _warn(label: str, detail: str = "") -> None:
+        suffix = f"  {detail}" if detail else ""
+        print(f"  {label:36s}  not available{suffix}")
+
+    def _fail(label: str, detail: str = "") -> None:
+        nonlocal all_ok
+        all_ok = False
+        suffix = f"  ({detail})" if detail else ""
+        print(f"  {label:36s}  missing{suffix}")
+
+    # -- header ---------------------------------------------------------------
+    print("[rfx] doctor\n")
+
+    # -- version info ---------------------------------------------------------
+    print("  Version")
+    try:
+        from rfx import __version__
+
+        print(f"    rfx-sdk          {__version__}")
+    except Exception:
+        print("    rfx-sdk          unknown")
+    print(f"    Python           {platform.python_version()}")
+    print(f"    Platform         {platform.platform()}")
     print()
 
-    for module, desc in optional_imports:
-        try:
-            __import__(module)
-            print(f"  {desc:36s}  ok")
-        except ImportError:
-            print(f"  {desc:36s}  not installed")
-
-    # Check Rust extension
+    # -- required tools -------------------------------------------------------
+    print("  Required tools")
+    for name in ("python3", "cargo", "uv"):
+        path = shutil.which(name)
+        if path:
+            _ok(name, path)
+        else:
+            _fail(name)
     print()
+
+    # -- Rust extension -------------------------------------------------------
+    print("  Rust extension")
     try:
         from rfx import _rfx  # noqa: F401
 
-        print(f"  {'rfx Rust extension':36s}  ok")
+        _ok("rfx._rfx", f"v{_rfx.__version__}")
     except ImportError:
-        print(f"  {'rfx Rust extension':36s}  not built (run: maturin develop)")
-
-    # Check serial ports
+        _fail("rfx._rfx", "run: maturin develop")
     print()
+
+    # -- core Python deps -----------------------------------------------------
+    print("  Core Python packages")
+    core_imports = [
+        ("tinygrad", "tinygrad"),
+        ("numpy", "NumPy"),
+        ("yaml", "PyYAML"),
+    ]
+    for module, label in core_imports:
+        try:
+            mod = __import__(module)
+            ver = getattr(mod, "__version__", "")
+            _ok(label, ver)
+        except ImportError:
+            _fail(label)
+    print()
+
+    # -- optional Python deps -------------------------------------------------
+    print("  Optional packages")
+    optional_imports = [
+        ("torch", "PyTorch"),
+        ("lerobot", "LeRobot"),
+        ("cv2", "OpenCV"),
+        ("anthropic", "Anthropic SDK"),
+        ("openai", "OpenAI SDK"),
+        ("mujoco", "MuJoCo"),
+    ]
+    for module, label in optional_imports:
+        try:
+            mod = __import__(module)
+            ver = getattr(mod, "__version__", "")
+            _ok(label, ver)
+        except ImportError:
+            _warn(label)
+    print()
+
+    # -- Zenoh transport ------------------------------------------------------
+    print("  Transport")
+    try:
+        from rfx import _rfx as _ext
+
+        if hasattr(_ext, "Topic"):
+            _ok("Zenoh (via Rust extension)")
+        else:
+            _warn("Zenoh", "Rust extension missing Topic binding")
+    except ImportError:
+        _warn("Zenoh", "Rust extension not built")
+    print()
+
+    # -- robot configs --------------------------------------------------------
+    print("  Robot configs")
+    # configs/ lives at rfx/configs/ relative to the repo root.
+    # __file__ is rfx/python/rfx/runtime/cli.py → walk up to rfx/, then into configs/
+    configs_dir = Path(__file__).resolve().parent.parent.parent.parent / "configs"
+    if configs_dir.is_dir():
+        for cfg_file in sorted(configs_dir.glob("*.yaml")):
+            try:
+                from rfx.robot.config import load_config
+
+                load_config(str(cfg_file))
+                _ok(cfg_file.name)
+            except Exception as exc:
+                _fail(cfg_file.name, str(exc))
+    else:
+        _warn("configs directory", str(configs_dir))
+    print()
+
+    # -- simulation backends --------------------------------------------------
+    print("  Simulation backends")
+    sim_backends = [
+        ("rfx.sim.mock", "MockRobot", "torch"),
+        ("rfx.sim.genesis", "Genesis (GPU)", "genesis"),
+        ("rfx.sim.mjx", "MJX (JAX)", "mujoco"),
+    ]
+    for module, label, dep in sim_backends:
+        if importlib.util.find_spec(dep) is None:
+            _warn(label, f"requires {dep}")
+        else:
+            try:
+                __import__(module)
+                _ok(label)
+            except Exception:
+                _warn(label)
+    print()
+
+    # -- rfxJIT backends ------------------------------------------------------
+    print("  rfxJIT backends")
+    try:
+        from rfxJIT.runtime.executor import available_backends
+
+        backends = available_backends()
+        for name, avail in backends.items():
+            if avail:
+                _ok(name)
+            elif name == "cpu":
+                _fail(name)
+            else:
+                _warn(name)
+    except ImportError:
+        # rfxJIT lives at repo root and may not be on sys.path in all contexts.
+        # Try adding the repo root (two levels above rfx/python/rfx/runtime/).
+        import sys
+
+        repo_root = str(Path(__file__).resolve().parent.parent.parent.parent.parent)
+        if repo_root not in sys.path:
+            sys.path.insert(0, repo_root)
+        try:
+            from rfxJIT.runtime.executor import available_backends
+
+            backends = available_backends()
+            for name, avail in backends.items():
+                if avail:
+                    _ok(name)
+                elif name == "cpu":
+                    _fail(name)
+                else:
+                    _warn(name)
+        except ImportError:
+            _warn("rfxJIT", "not found")
+    print()
+
+    # -- hardware discovery ---------------------------------------------------
+    print("  Hardware")
     try:
         from rfx.robot.discovery import discover_ports
 
         ports = discover_ports()
         if ports:
-            print("  Serial ports:")
             for p in ports:
-                print(f"    {p}")
+                port_name = p.get("port", str(p)) if isinstance(p, dict) else str(p)
+                robot_type = p.get("robot_type", "unknown") if isinstance(p, dict) else ""
+                _ok(port_name, robot_type)
         else:
-            print("  No serial ports found")
+            print("    No serial devices found")
     except Exception:
-        print("  Serial port detection: unavailable")
+        _warn("Serial port detection")
 
-    print()
-    if all_ok:
-        print("[rfx] All good.")
+    # Check Zenoh env vars
+    zenoh_connect = os.environ.get("RFX_ZENOH_CONNECT", "")
+    if zenoh_connect:
+        _ok("RFX_ZENOH_CONNECT", zenoh_connect)
     else:
-        print("[rfx] Some tools missing. See above.")
+        print("    RFX_ZENOH_CONNECT              not set (using defaults)")
+    print()
+
+    # -- summary --------------------------------------------------------------
+    if all_ok:
+        print("[rfx] All good. Ready to go.")
+    else:
+        print("[rfx] Some required items missing. See above.")
 
     return 0
 
