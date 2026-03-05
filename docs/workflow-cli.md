@@ -39,7 +39,7 @@ rfx record --robot go2 --repo-id demos --duration 20 --push
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--robot` | required | Robot type (`so101`, `go2`, `g1`) |
+| `--robot` | required | Robot type (`so101`, `go2`, `g1`, `innate`) |
 | `--repo-id` | required | Dataset name or HuggingFace repo ID |
 | `--episodes` | `1` | Number of episodes to record |
 | `--duration` | interactive | Episode duration in seconds. Omit to stop with Ctrl+C. |
@@ -77,7 +77,7 @@ rfx deploy runs/my-policy --robot so101 --duration 60 --rate-hz 50 --port /dev/t
 | Flag | Default | Description |
 |------|---------|-------------|
 | `policy` | required | Path to policy dir, `hf://org/repo`, or `.py` file |
-| `--robot` | auto | Robot type (`so101`, `go2`, `g1`). Auto-detected from policy config if saved. |
+| `--robot` | auto | Robot type (`so101`, `go2`, `g1`, `innate`). Auto-detected from policy config if saved. |
 | `--config` | none | Path to robot YAML config (overrides `--robot`) |
 | `--port` | auto | Serial port or IP override |
 | `--rate-hz` | auto | Control loop frequency (defaults to robot config) |
@@ -116,6 +116,7 @@ stats = rfx.deploy("runs/my-policy", robot="so101")
 stats = rfx.deploy("hf://user/policy", robot="go2", duration=30)
 stats = rfx.deploy("my_policy.py", robot="so101")
 ```
+
 
 ## Secondary Commands
 

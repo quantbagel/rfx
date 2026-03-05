@@ -1,21 +1,35 @@
 # Repository Structure
 
-Top-level layout:
+```
+rfx/                    # Core source tree
+├── crates/             # Rust crates (rfx-core, rfx-python bindings)
+├── python/rfx/         # Python SDK
+│   ├── robot/          # Robot protocol, config, URDF
+│   ├── real/           # Hardware backends (SO-101, Go2, G1, Innate)
+│   ├── sim/            # Simulation backends (Genesis, MJX, Mock)
+│   ├── teleop/         # Teleoperation sessions, transport, recording
+│   ├── collection/     # Dataset recording, hub integration
+│   ├── runtime/        # CLI, node lifecycle, health, otel
+│   ├── workflow/       # Quality gates, stage registry
+│   └── utils/          # Padding, transforms, normalizers
+├── tests/              # Python test suite
+├── configs/            # Robot YAML configs (so101, go2, so101_bimanual)
+├── assets/             # Robot URDF/MJCF assets
+└── examples/           # Runnable examples
 
-- `rfx/`: production and test source code (includes `python/rfx/hub.py` for model management and `python/rfx/nn.py` for policy definitions)
-- `packages/`: extension Python packages (`rfx-sdk-sim`, `rfx-sdk-go2`, `rfx-sdk-lerobot`)
-- `docs/`: architecture, workflows, and contributor guides
-  includes perf baselines in `docs/perf/baselines/`
-- `rfxJIT/`: ultra-performance kernel and compiler engine
-- `cli/`: command-line interfaces and helpers
-- `.claude/skills/`: Claude skills used by agents
+packages/               # Extension Python packages
+├── rfx-sim/            # rfx-sdk-sim (simulation extras)
+├── rfx-go2/            # rfx-sdk-go2 (Go2-specific extras)
+└── rfx-lerobot/        # rfx-sdk-lerobot (LeRobot integration)
+
+docs/                   # Documentation
+cli/                    # Command-line tooling
+```
 
 Quality/tooling:
 
-- Hook logic: `.githooks/`
-- Hook installer/config: `scripts/setup-git-hooks.sh`, `.pre-commit-config.yaml`
+- Git hooks: `.githooks/`, `scripts/setup-git-hooks.sh`
 - Moon workspace: `.moon/workspace.yml`
-- Python check runner: `scripts/python-checks.sh`
-- Source setup runner: `scripts/setup-from-source.sh`
-- CI workflow: `.github/workflows/ci.yml`
-- Workflow guide: `docs/workflow.md`
+- Python checks: `scripts/python-checks.sh`
+- Source setup: `scripts/setup-from-source.sh`
+- CI: `.github/workflows/ci.yml`
