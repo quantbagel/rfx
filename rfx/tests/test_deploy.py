@@ -17,7 +17,7 @@ from rfx.deploy import (
     deploy,
 )
 from rfx.hub import LoadedPolicy
-from rfx.robot.config import G1_CONFIG, GO2_CONFIG, SO101_CONFIG, RobotConfig
+from rfx.robot.config import G1_CONFIG, GO2_CONFIG, INNATE_CONFIG, SO101_CONFIG, RobotConfig
 from rfx.runtime.cli import build_parser
 from rfx.session import SessionStats
 
@@ -68,6 +68,11 @@ class TestResolveRobotConfig:
         loaded = _make_loaded_policy()
         cfg = _resolve_robot_config(loaded, robot="g1")
         assert cfg.name == G1_CONFIG.name
+
+    def test_explicit_robot_innate(self) -> None:
+        loaded = _make_loaded_policy()
+        cfg = _resolve_robot_config(loaded, robot="innate")
+        assert cfg.name == INNATE_CONFIG.name
 
     def test_robot_name_case_insensitive(self) -> None:
         loaded = _make_loaded_policy()
@@ -1492,7 +1497,7 @@ class TestBuiltinConfigs:
         from rfx.deploy import _BUILTIN_CONFIGS
 
         # At minimum these must exist; new robots may be added
-        assert {"so101", "go2", "g1"}.issubset(_BUILTIN_CONFIGS.keys())
+        assert {"so101", "go2", "g1", "innate"}.issubset(_BUILTIN_CONFIGS.keys())
 
     def test_so101_maps_to_correct_config(self) -> None:
         from rfx.deploy import _BUILTIN_CONFIGS
@@ -1508,6 +1513,11 @@ class TestBuiltinConfigs:
         from rfx.deploy import _BUILTIN_CONFIGS
 
         assert _BUILTIN_CONFIGS["g1"] is G1_CONFIG
+
+    def test_innate_maps_to_correct_config(self) -> None:
+        from rfx.deploy import _BUILTIN_CONFIGS
+
+        assert _BUILTIN_CONFIGS["innate"] is INNATE_CONFIG
 
     def test_all_values_are_robot_configs(self) -> None:
         from rfx.deploy import _BUILTIN_CONFIGS
@@ -3049,6 +3059,32 @@ class TestG1ConfigDetails:
             assert j.position_min < j.position_max
             assert j.position_min >= -3.2
             assert j.position_max <= 3.2
+
+
+class TestInnateConfigDetails:
+    """Detailed validation of Innate built-in config."""
+
+    def test_innate_6_dof(self) -> None:
+        assert INNATE_CONFIG.action_dim == 6
+        assert len(INNATE_CONFIG.joints) == 6
+
+    def test_innate_state_dim(self) -> None:
+        assert INNATE_CONFIG.state_dim == 12  # 6 pos + 6 vel
+
+    def test_innate_50hz(self) -> None:
+        assert INNATE_CONFIG.control_freq_hz == 50
+
+    def test_innate_zenoh_topics(self) -> None:
+        assert INNATE_CONFIG.hardware["zenoh_state_topic"] == "innate/joint_states"
+        assert INNATE_CONFIG.hardware["zenoh_cmd_topic"] == "innate/joint_commands"
+
+    def test_innate_msg_format_json(self) -> None:
+        assert INNATE_CONFIG.hardware["msg_format"] == "json"
+
+    def test_innate_joint_names_sequential(self) -> None:
+        for i, j in enumerate(INNATE_CONFIG.joints):
+            assert j.name == f"joint_{i}"
+            assert j.index == i
 
 
 # ---------------------------------------------------------------------------
