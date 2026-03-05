@@ -194,6 +194,7 @@ from . import config, discovery, graph, lerobot, urdf  # noqa: E402
 from .config import (  # noqa: E402
     G1_CONFIG,
     GO2_CONFIG,
+    INNATE_CONFIG,
     SO101_CONFIG,
     CameraConfig,
     JointConfig,
@@ -213,6 +214,7 @@ __all__ = [
     "SO101_CONFIG",
     "GO2_CONFIG",
     "G1_CONFIG",
+    "INNATE_CONFIG",
     "load_config",
     "URDF",
     "discover_ports",
