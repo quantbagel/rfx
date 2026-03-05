@@ -1525,6 +1525,11 @@ class TestBuiltinConfigs:
         for key, cfg in _BUILTIN_CONFIGS.items():
             assert isinstance(cfg, RobotConfig), f"{key} is not a RobotConfig"
 
+    def test_innate_importable_from_robot_module(self) -> None:
+        from rfx.robot import INNATE_CONFIG
+
+        assert INNATE_CONFIG.name == "Innate"
+
 
 # ---------------------------------------------------------------------------
 # _WrapCallable.__call__ forwarding
