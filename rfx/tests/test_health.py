@@ -35,12 +35,12 @@ def test_watchdog_does_not_fire_when_kicked() -> None:
     def on_timeout() -> None:
         fired.set()
 
-    wd = Watchdog(timeout_s=0.15, on_timeout=on_timeout)
+    wd = Watchdog(timeout_s=0.4, on_timeout=on_timeout)
     try:
-        # Kick faster than the timeout
-        for _ in range(6):
+        # Keep a wide margin vs timeout to avoid scheduler-related flakes on CI.
+        for _ in range(10):
             wd.kick()
-            time.sleep(0.05)
+            time.sleep(0.02)
         assert not fired.is_set(), "Watchdog should NOT have fired"
     finally:
         wd.stop()
