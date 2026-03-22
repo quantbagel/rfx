@@ -4,6 +4,7 @@ Canonical scripts demonstrating the core rfx user workflows.
 
 ## Scripts
 
+- **`so101_quickstart.py`** -- Connect to a real SO-101 and run a gentle movement smoke test
 - **`deploy_real.py`** -- Deploy a policy to real SO-101 hardware (or mock mode)
 - **`universal_go2.py`** -- Command-level Go2 control across `mock`/`genesis`/`mjx`/`real`
 - **`genesis_viewer.py`** -- Visual inspection and debugging in Genesis with a live viewer

@@ -2,22 +2,50 @@
 rfx CLI - primary framework commands plus lightweight workflow utilities.
 
     Primary:
-        rfx record   - Record observations from a robot
-        rfx deploy   - Deploy a trained policy to a robot
-        rfx doctor   - Check your setup
+        rfx record    - Record observations from a robot
+        rfx deploy    - Deploy a trained policy to a robot
+        rfx doctor    - Check your setup
+        rfx register  - Register a robot with the control plane
+        rfx probe     - Measure AWS region latency from the robot machine
+        rfx connect   - Keep a registered robot online via heartbeats
 
     Secondary:
-        rfx train    - Register a training-stage artifact
-        rfx runs     - Inspect the lightweight run registry
+        rfx train     - Register a training-stage artifact
+        rfx runs      - Inspect the lightweight run registry
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import socket
+import statistics
 import sys
+import time
 from pathlib import Path
 from typing import Any
+
+_DEFAULT_AWS_PROBE_REGIONS = [
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
+    "eu-west-1",
+    "eu-central-1",
+    "ap-northeast-1",
+    "ap-southeast-1",
+]
+
+_AWS_REGION_LABELS = {
+    "us-east-1": "N. Virginia",
+    "us-east-2": "Ohio",
+    "us-west-1": "N. California",
+    "us-west-2": "Oregon",
+    "eu-west-1": "Ireland",
+    "eu-central-1": "Frankfurt",
+    "ap-northeast-1": "Tokyo",
+    "ap-southeast-1": "Singapore",
+}
 
 # ---------------------------------------------------------------------------
 # deploy
@@ -354,6 +382,286 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# robot control-plane helpers
+# ---------------------------------------------------------------------------
+
+
+def _parse_metadata(args: argparse.Namespace) -> dict[str, str]:
+    metadata: dict[str, str] = {}
+    for item in args.metadata:
+        if "=" not in item:
+            raise ValueError(f"Invalid metadata '{item}'. Use key=value.")
+        key, value = item.split("=", 1)
+        metadata[key.strip()] = value.strip()
+    return metadata
+
+
+def _resolve_robot_identity(args: argparse.Namespace) -> tuple[str, str, str]:
+    robot_id = args.robot_id or socket.gethostname()
+    hostname = args.hostname or socket.gethostname()
+    display_name = args.display_name or robot_id
+    return robot_id, hostname, display_name
+
+
+def _local_region_candidates(regions: list[str]) -> list[dict[str, Any]]:
+    return [
+        {
+            "provider": "aws",
+            "region": region,
+            "label": _AWS_REGION_LABELS.get(region, region),
+            "probe_host": f"ec2.{region}.amazonaws.com",
+            "probe_port": 443,
+            "recommended_instance_type": "g6e.xlarge",
+        }
+        for region in regions
+    ]
+
+
+def _register_robot_from_args(args: argparse.Namespace) -> tuple[str, dict[str, str], dict[str, Any]]:
+    from rfx.platform_client import (
+        register_robot,
+    )
+
+    metadata = _parse_metadata(args)
+    robot_id, hostname, display_name = _resolve_robot_identity(args)
+    registered = register_robot(
+        url=args.url,
+        api_key=args.api_key,
+        robot_id=robot_id,
+        robot_kind=args.robot_kind,
+        display_name=display_name,
+        transport=args.transport,
+        hostname=hostname,
+        sdk_version="0.2.0",
+        metadata=metadata,
+        org_id=args.org_id,
+    )
+    return robot_id, metadata, registered
+
+
+def _run_region_probe(args: argparse.Namespace, *, robot_id: str) -> int:
+    from rfx.platform_client import (
+        fetch_region_candidates,
+        submit_probe_results,
+    )
+
+    try:
+        candidates = fetch_region_candidates(url=args.url, api_key=args.api_key)
+        if not candidates:
+            print("[rfx] No probe candidates returned by the platform.")
+            return 1
+        print(f"[rfx] Probing {len(candidates)} AWS region candidates directly from this machine...")
+        probe_results = _probe_region_candidates(
+            candidates,
+            samples=args.probe_samples,
+            timeout_s=args.probe_timeout,
+        )
+        if not probe_results:
+            print("[rfx] Region probe produced no successful samples.")
+            return 1
+        recommendation = submit_probe_results(
+            url=args.url,
+            api_key=args.api_key,
+            robot_id=robot_id,
+            results=probe_results,
+        )
+        print(
+            "[rfx] Recommended region: "
+            f"{recommendation.get('region')} "
+            f"({recommendation.get('avg_latency_ms', 0.0):.1f} ms)"
+        )
+    except Exception as exc:
+        print(f"[rfx] Region probe failed: {type(exc).__name__}: {exc}")
+        return 1
+    return 0
+
+
+def cmd_register(args: argparse.Namespace) -> int:
+    """Register a robot with the control plane."""
+    try:
+        _robot_id, _metadata, registered = _register_robot_from_args(args)
+    except ValueError as exc:
+        print(f"[rfx] {exc}")
+        return 1
+    except Exception as exc:
+        print(f"[rfx] Register failed: {type(exc).__name__}: {exc}")
+        return 1
+
+    print(f"[rfx] Robot registered: {registered.get('display_name') or registered.get('robot_id')}")
+    print(f"[rfx]   robot_id: {registered.get('robot_id')}")
+    print(f"[rfx]   transport: {registered.get('transport')}")
+    print(f"[rfx]   grpc: {registered.get('grpc_endpoint') or '-'}")
+    print(f"[rfx]   webrtc: {registered.get('webrtc_endpoint') or '-'}")
+    return 0
+
+
+def cmd_probe(args: argparse.Namespace) -> int:
+    """Probe candidate AWS regions from the robot machine and submit results."""
+    from rfx.platform_client import fetch_region_candidates, submit_probe_results
+
+    regions = [item.strip() for item in args.regions.split(",") if item.strip()]
+    if not regions:
+      regions = list(_DEFAULT_AWS_PROBE_REGIONS)
+
+    try:
+        if args.url:
+            candidates = fetch_region_candidates(url=args.url, api_key=args.api_key)
+            if not candidates:
+                print("[rfx] Platform returned no probe candidates; falling back to built-in AWS regions.")
+                candidates = _local_region_candidates(regions)
+        else:
+            candidates = _local_region_candidates(regions)
+    except Exception as exc:
+        print(f"[rfx] Failed to fetch region candidates from platform: {type(exc).__name__}: {exc}")
+        print("[rfx] Falling back to built-in AWS regions.")
+        candidates = _local_region_candidates(regions)
+
+    if not candidates:
+        print("[rfx] No region candidates to probe.")
+        return 1
+
+    print(f"[rfx] Probing {len(candidates)} AWS region candidates directly from this machine...")
+    probe_results = _probe_region_candidates(
+        candidates,
+        samples=args.probe_samples,
+        timeout_s=args.probe_timeout,
+    )
+    if not probe_results:
+        print("[rfx] Region probe produced no successful samples.")
+        return 1
+
+    best = probe_results[0]
+    print(
+        "[rfx] Best region: "
+        f"{best.get('region')} "
+        f"({best.get('avg_latency_ms', 0.0):.1f} ms avg, {best.get('best_latency_ms', 0.0):.1f} ms best)"
+    )
+
+    if not args.submit:
+        return 0
+
+    if not args.url:
+        print("[rfx] --submit requires --url so results can be sent to the platform.")
+        return 1
+
+    robot_id = args.robot_id or socket.gethostname()
+    if args.register_if_missing:
+        register_status = cmd_register(args)
+        if register_status != 0:
+            return register_status
+
+    try:
+        recommendation = submit_probe_results(
+            url=args.url,
+            api_key=args.api_key,
+            robot_id=robot_id,
+            results=probe_results,
+        )
+        print(
+            "[rfx] Submitted probe results. Platform recommendation: "
+            f"{recommendation.get('region')} "
+            f"({recommendation.get('avg_latency_ms', 0.0):.1f} ms)"
+        )
+    except Exception as exc:
+        print(f"[rfx] Failed to submit probe results: {type(exc).__name__}: {exc}")
+        return 1
+    return 0
+
+
+def cmd_connect(args: argparse.Namespace) -> int:
+    """Register a robot with the control plane and keep it online."""
+    from rfx.platform_client import (
+        disconnect_robot,
+        heartbeat_robot,
+    )
+
+    try:
+        robot_id, metadata, registered = _register_robot_from_args(args)
+    except ValueError as exc:
+        print(f"[rfx] {exc}")
+        return 1
+    except Exception as exc:
+        print(f"[rfx] Connect failed: {type(exc).__name__}: {exc}")
+        return 1
+
+    print(f"[rfx] Robot registered: {registered.get('display_name') or registered.get('robot_id')}")
+    print(f"[rfx]   robot_id: {registered.get('robot_id')}")
+    print(f"[rfx]   transport: {registered.get('transport')}")
+    print(f"[rfx]   grpc: {registered.get('grpc_endpoint') or '-'}")
+    print(f"[rfx]   webrtc: {registered.get('webrtc_endpoint') or '-'}")
+
+    if args.probe:
+        result = _run_region_probe(args, robot_id=robot_id)
+        if result != 0:
+            return result
+
+    if args.once:
+        return 0
+
+    print(f"[rfx] Sending heartbeat every {args.heartbeat_interval:.1f}s. Ctrl+C to disconnect.")
+    try:
+        while True:
+            time.sleep(args.heartbeat_interval)
+            heartbeat_robot(
+                url=args.url,
+                api_key=args.api_key,
+                robot_id=robot_id,
+                transport=args.transport,
+                sdk_version="0.2.0",
+                metadata=metadata,
+            )
+    except KeyboardInterrupt:
+        try:
+            disconnect_robot(url=args.url, api_key=args.api_key, robot_id=robot_id)
+        except Exception:
+            pass
+        print("\n[rfx] Robot disconnected.")
+    except Exception as exc:
+        print(f"[rfx] Heartbeat failed: {type(exc).__name__}: {exc}")
+        return 1
+    return 0
+
+
+def _probe_region_candidates(
+    candidates: list[dict[str, Any]],
+    *,
+    samples: int,
+    timeout_s: float,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for candidate in candidates:
+        host = str(candidate.get("probe_host", "")).strip()
+        port = int(candidate.get("probe_port", 443))
+        region = str(candidate.get("region", "")).strip()
+        if not host or not region:
+            continue
+        sample_values: list[float] = []
+        for _ in range(samples):
+            started = time.perf_counter()
+            try:
+                with socket.create_connection((host, port), timeout=timeout_s):
+                    sample_values.append((time.perf_counter() - started) * 1000.0)
+            except OSError:
+                continue
+        if not sample_values:
+            continue
+        avg_ms = statistics.fmean(sample_values)
+        best_ms = min(sample_values)
+        print(f"[rfx]   {region:12s} avg={avg_ms:6.1f} ms best={best_ms:6.1f} ms host={host}:{port}")
+        results.append(
+            {
+                "region": region,
+                "probe_host": host,
+                "probe_port": port,
+                "samples_ms": sample_values,
+                "avg_latency_ms": avg_ms,
+                "best_latency_ms": best_ms,
+            }
+        )
+    return sorted(results, key=lambda item: (float(item["avg_latency_ms"]), float(item["best_latency_ms"])))
+
+
+# ---------------------------------------------------------------------------
 # runs (lightweight registry query)
 # ---------------------------------------------------------------------------
 
@@ -395,6 +703,11 @@ examples:
   rfx record --robot so101 --repo-id my-org/demos --episodes 10
   rfx train  --data demos/ --config train.yaml
   rfx deploy runs/my-policy --robot so101
+  rfx register --url https://your-dashboard.up.railway.app --api-key $RFX_API_KEY --robot-kind so101
+  rfx probe
+  rfx probe --regions us-east-1,us-west-2,eu-west-1
+  rfx probe --url https://your-dashboard.up.railway.app --api-key $RFX_API_KEY --robot-id so101-lab --submit
+  rfx connect --url https://your-dashboard.up.railway.app --api-key $RFX_API_KEY --robot-kind so101
   rfx deploy hf://user/my-policy --robot go2 --duration 60
   rfx deploy runs/my-policy --mock
 """,
@@ -470,6 +783,55 @@ examples:
         help="exit non-zero when required dependencies are missing",
     )
     s.set_defaults(fn=cmd_doctor)
+
+    # --- shared robot args ---
+    def add_robot_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--url", default=None, help="public dashboard URL, e.g. https://dashboard.example.com")
+        parser.add_argument("--api-key", default=None, help="platform API key")
+        parser.add_argument("--robot-id", default=None, help="robot identifier (default: local hostname)")
+        parser.add_argument("--robot-kind", default="so101", help="robot type label, e.g. so101 or go2")
+        parser.add_argument("--display-name", default=None, help="human-readable robot name")
+        parser.add_argument("--transport", default="sdk", help="transport label shown in the dashboard")
+        parser.add_argument("--hostname", default=None, help="override reported hostname")
+        parser.add_argument("--org-id", default="", help="optional org identifier")
+        parser.add_argument("--metadata", action="append", default=[], help="extra metadata in key=value form")
+
+    # --- register ---
+    s = sp.add_parser(
+        "register",
+        help="register a robot with the platform",
+        description="Create or refresh the robot record in the control plane.",
+    )
+    add_robot_args(s)
+    s.set_defaults(fn=cmd_register)
+
+    # --- probe ---
+    s = sp.add_parser(
+        "probe",
+        help="probe candidate AWS regions from this robot machine",
+        description="Measure candidate AWS region latency directly from the current machine. Submission to the platform is optional.",
+    )
+    add_robot_args(s)
+    s.add_argument("--regions", default=",".join(_DEFAULT_AWS_PROBE_REGIONS), help="comma-separated AWS regions to probe when not fetching candidates from the platform")
+    s.add_argument("--submit", action="store_true", help="submit probe results back to the platform")
+    s.add_argument("--register-if-missing", action="store_true", help="register the robot before probing")
+    s.add_argument("--probe-samples", type=int, default=3, help="number of TCP latency samples per region")
+    s.add_argument("--probe-timeout", type=float, default=2.5, help="per-sample TCP connect timeout in seconds")
+    s.set_defaults(fn=cmd_probe)
+
+    # --- connect ---
+    s = sp.add_parser(
+        "connect",
+        help="keep a registered robot online with the platform",
+        description="Register a robot with the control plane and send periodic heartbeats.",
+    )
+    add_robot_args(s)
+    s.add_argument("--probe", action="store_true", help="run region probing before entering heartbeat mode")
+    s.add_argument("--probe-samples", type=int, default=3, help="number of TCP latency samples per region")
+    s.add_argument("--probe-timeout", type=float, default=2.5, help="per-sample TCP connect timeout in seconds")
+    s.add_argument("--heartbeat-interval", type=float, default=15.0, help="heartbeat interval in seconds")
+    s.add_argument("--once", action="store_true", help="register once and exit without heartbeats")
+    s.set_defaults(fn=cmd_connect)
 
     # --- runs ---
     s = sp.add_parser("runs", help="query the run registry")

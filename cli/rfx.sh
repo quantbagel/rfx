@@ -6,7 +6,7 @@ cd "$ROOT"
 
 usage() {
   cat <<'USAGE'
-Usage: cli/rfx.sh <doctor|doctor-teleop|doctor-so101|so101-demo|so101-bimanual|so101-setup|bootstrap|bootstrap-teleop|setup-source|check|record|train|deploy|runs>
+Usage: cli/rfx.sh <doctor|doctor-teleop|doctor-so101|so101-demo|so101-bimanual|so101-setup|bootstrap|bootstrap-teleop|setup-source|check|record|train|deploy|register|probe|connect|runs>
 USAGE
 }
 
@@ -57,11 +57,11 @@ runtime_cli() {
 }
 
 so101_demo() {
-  uv run --python 3.13 rfx/examples/so101_quickstart.py "$@"
+  uv run --python 3.13 python examples/so101_quickstart.py "$@"
 }
 
 so101_bimanual() {
-  uv run --python 3.13 rfx/examples/teleop_record.py --config rfx/configs/so101_bimanual.yaml "$@"
+  uv run --python 3.13 python examples/teleop_record.py --config configs/so101_bimanual.yaml "$@"
 }
 
 so101_setup() {
@@ -120,6 +120,18 @@ main() {
     deploy)
       shift
       runtime_cli deploy "$@"
+      ;;
+    register)
+      shift
+      runtime_cli register "$@"
+      ;;
+    probe)
+      shift
+      runtime_cli probe "$@"
+      ;;
+    connect)
+      shift
+      runtime_cli connect "$@"
       ;;
     runs)
       shift
