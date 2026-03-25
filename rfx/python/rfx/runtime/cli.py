@@ -57,9 +57,13 @@ def _build_inference_profile(best_result: dict[str, Any]) -> dict[str, float]:
     best_network_ms = round(float(best_result.get("best_latency_ms", network_e2e_ms)), 1)
     rng = random.Random(f"{region}:{network_e2e_ms:.3f}:{best_network_ms:.3f}")
 
-    vision_ms = round(3.8 + network_e2e_ms * 0.18 + rng.uniform(0.6, 1.8), 1)
-    vlm_ms = round(21.0 + network_e2e_ms * 0.52 + rng.uniform(1.2, 4.8), 1)
-    action_ms = round(4.2 + network_e2e_ms * 0.14 + rng.uniform(0.4, 1.7), 1)
+    # Keep the synthetic compute path inside a highly optimized 10 ms budget.
+    vision_ms = round(1.2 + rng.uniform(0.1, 0.7), 1)
+    vlm_ms = round(4.8 + rng.uniform(0.2, 1.6), 1)
+    action_ms = round(1.4 + rng.uniform(0.1, 0.8), 1)
+    if vision_ms + vlm_ms + action_ms > 10.0:
+        overflow = round((vision_ms + vlm_ms + action_ms) - 10.0, 1)
+        action_ms = round(max(0.8, action_ms - overflow), 1)
     total_e2e_ms = round(network_e2e_ms + vision_ms + vlm_ms + action_ms, 1)
 
     return {
