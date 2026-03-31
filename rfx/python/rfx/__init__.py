@@ -73,6 +73,12 @@ from .deploy import deploy  # noqa: E402
 from .hub import LoadedPolicy, inspect_policy, load_policy, push_policy  # noqa: E402
 from .observation import ObservationSpec, make_observation, unpad_action  # noqa: E402
 from .robot import URDF, Robot, RobotBase, RobotConfig, load_config  # noqa: E402
+from .robot.config import (  # noqa: E402
+    G1_CONFIG,
+    GO2_CONFIG,
+    INNATE_CONFIG,
+    SO101_CONFIG,
+)
 from .session import Session, SessionStats, run  # noqa: E402
 from .skills import Skill, SkillRegistry, skill  # noqa: E402
 
@@ -133,6 +139,11 @@ __all__ = [
     "Skill",
     "SkillRegistry",
     "URDF",
+    # Built-in robot configs
+    "SO101_CONFIG",
+    "GO2_CONFIG",
+    "G1_CONFIG",
+    "INNATE_CONFIG",
     "deploy",
     "inspect_policy",
     "jit",

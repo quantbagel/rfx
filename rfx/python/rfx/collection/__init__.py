@@ -178,8 +178,7 @@ def _extract_images(
     if len(resolved_names) < images.shape[0]:
         resolved_names.extend(f"cam{i}" for i in range(len(resolved_names), images.shape[0]))
     return {
-        resolved_names[i]: np.asarray(images[i], dtype=np.uint8)
-        for i in range(images.shape[0])
+        resolved_names[i]: np.asarray(images[i], dtype=np.uint8) for i in range(images.shape[0])
     }
 
 
@@ -224,8 +223,7 @@ def _mock_action(iteration: int, robot_config: RobotConfig) -> Any:
 
     phase = iteration / max(float(robot_config.control_freq_hz), 1.0)
     values = [
-        0.25 * math.sin(phase + joint_idx * 0.2)
-        for joint_idx in range(robot_config.action_dim)
+        0.25 * math.sin(phase + joint_idx * 0.2) for joint_idx in range(robot_config.action_dim)
     ]
     tensor = torch.zeros((1, robot_config.max_action_dim), dtype=torch.float32)
     tensor[0, : robot_config.action_dim] = torch.tensor(values, dtype=torch.float32)
@@ -308,9 +306,7 @@ def collect(
                 robot.reset()
             recorder.start_episode(task=task)
             frame_count = 0
-            deadline = (
-                time.perf_counter() + float(duration_s) if duration_s is not None else None
-            )
+            deadline = time.perf_counter() + float(duration_s) if duration_s is not None else None
             interrupted = False
 
             while True:

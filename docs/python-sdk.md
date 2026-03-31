@@ -33,6 +33,31 @@ obs = robot.observe()
 rfx.deploy("runs/my-policy", robot="so101")
 ```
 
+## No hardware? No problem
+
+You can explore the entire rfx workflow on your laptop — no robot required.
+
+```python
+# Mock robot: no sim engine deps, spring-damper physics
+robot = rfx.MockRobot(state_dim=12, action_dim=6)
+obs = robot.observe()
+robot.act(torch.zeros(1, 64))
+
+# Simulation: GPU-accelerated with viewer
+robot = rfx.SimRobot.from_config("so101.yaml", backend="genesis", viewer=True)
+
+# Batched RL training: thousands of parallel envs
+robot = rfx.SimRobot.from_config("go2.yaml", backend="mjx", num_envs=4096)
+```
+
+Test the full deploy pipeline without hardware:
+
+```bash
+rfx deploy runs/my-policy --robot so101 --mock
+```
+
+Write a policy, save it, deploy with `--mock`, iterate. Switch to real hardware when you're ready.
+
 ## The Robot Interface
 
 Every robot -- simulated or real -- implements three methods:
@@ -47,8 +72,10 @@ Built-in robots:
 
 ```python
 robot = rfx.SimRobot.from_config("so101.yaml", backend="genesis", viewer=True)
-robot = rfx.MockRobot(state_dim=12, action_dim=6)   # zero deps, for testing
-robot = rfx.RealRobot(rfx.SO101_CONFIG)              # real hardware
+robot = rfx.MockRobot(state_dim=12, action_dim=6)   # no sim engine deps, for testing
+robot = rfx.RealRobot(rfx.SO101_CONFIG)              # real hardware (SO-101)
+robot = rfx.RealRobot(rfx.GO2_CONFIG)                # real hardware (Go2)
+robot = rfx.RealRobot(rfx.INNATE_CONFIG)             # real hardware (Innate, Zenoh-native)
 ```
 
 ## Collection
@@ -155,11 +182,14 @@ rfx.push_policy("runs/go2-walk-v1", "rfx-community/go2-walk-v1")
 stats = rfx.deploy(
     "runs/my-policy",      # path, hf:// URL, or .py file
     robot="so101",          # robot type or YAML path
+    config=None,            # YAML config path (overrides robot)
     port="/dev/ttyACM0",    # optional hardware override
     rate_hz=50,             # control frequency
     duration=30,            # seconds (None = infinite)
     mock=False,             # use MockRobot instead
     device="cpu",           # torch device
+    warmup_s=0.5,           # seconds to sleep after reset
+    verbose=True,           # print status during deployment
 )
 
 # stats contains timing info
@@ -196,9 +226,10 @@ Works with any robot config -- joint names are resolved from `config.joints`.
 ## Built-in Robot Configs
 
 ```python
-rfx.SO101_CONFIG   # 6 DOF arm, 50 Hz, joints: shoulder_pan, shoulder_lift, elbow, wrist_pitch, wrist_roll, gripper
-rfx.GO2_CONFIG     # 12 DOF quadruped, 200 Hz
-rfx.G1_CONFIG      # 29 DOF humanoid, 50 Hz
+rfx.SO101_CONFIG    # 6 DOF arm, 50 Hz, joints: shoulder_pan, shoulder_lift, elbow, wrist_pitch, wrist_roll, gripper
+rfx.GO2_CONFIG      # 12 DOF quadruped, 200 Hz
+rfx.G1_CONFIG       # 29 DOF humanoid, 50 Hz
+rfx.INNATE_CONFIG   # 6 DOF Innate bot, 50 Hz, Zenoh-native (no Rust RobotNode)
 ```
 
 ## Package Layout
@@ -207,9 +238,13 @@ rfx.G1_CONFIG      # 29 DOF humanoid, 50 Hz
 rfx/python/rfx/
 ├── robot/          # Robot protocol, config, URDF
 ├── collection/     # Collection and dataset contracts
-├── real/           # Real hardware backends (SO-101, Go2, G1)
+├── real/           # Real hardware backends (SO-101, Go2, G1, Innate)
 ├── sim/            # Simulation backends (MuJoCo, Genesis, mock)
+├── teleop/         # Teleoperation sessions, transport, recording
 ├── runtime/        # Lifecycle, CLI, health, runtime helpers
+├── workflow/       # Quality gates, stage registry
+├── utils/          # Padding, transforms, normalizers
+├── nn.py           # Policy definitions (MLP, ActorCritic, save/load)
 ├── hub.py          # Model save/load/push (HuggingFace Hub)
 ├── session.py      # Rate-controlled control loop
 ├── deploy.py       # rfx.deploy() implementation

@@ -47,7 +47,7 @@ Repo-managed hooks are configured via `.githooks`:
 - `pre-push`: Rust fmt/clippy/test + Python lint/typecheck subset/test
 - Optional local main-push block: set `RFX_BLOCK_MAIN_PUSH=1`.
 
-Enable hooks once per clone:
+Hooks are automatically installed by `scripts/setup-from-source.sh`. To re-install hooks manually:
 
 ```bash
 ./scripts/setup-git-hooks.sh
@@ -57,7 +57,6 @@ Recommended first-time local setup:
 
 ```bash
 bash scripts/setup-from-source.sh
-./scripts/setup-git-hooks.sh
 ```
 
 ## Repo Layout

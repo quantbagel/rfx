@@ -181,6 +181,7 @@ loaded = rfx.load_policy("hf://rfx-community/go2-walk-v1")
 | **SO-101** | 6-DOF arm | USB serial (Rust driver) | Ready |
 | **Unitree Go2** | Quadruped | Ethernet (Zenoh transport) | Ready |
 | **Unitree G1** | Humanoid | Ethernet (Zenoh transport) | In progress |
+| **Innate** | Manipulation arm | Zenoh-native (no RobotNode) | Ready |
 
 Custom robots: implement `observe()` / `act()` / `reset()` or write a YAML config.
 
@@ -198,6 +199,9 @@ Simulation is part of the framework contract. A policy should move across sim, m
 
 - [Full documentation](https://deepwiki.com/quantbagel/rfx)
 - [SO-101 quickstart](docs/so101.md)
+- [Go2 quickstart](docs/go2.md)
+- [Innate bot](docs/innate.md)
+- [Teleoperation](docs/teleop.md)
 - [Simulation guide](docs/sim.md)
 - [Python SDK reference](docs/python-sdk.md)
 - [CLI reference](docs/workflow-cli.md)
@@ -209,6 +213,16 @@ Simulation is part of the framework contract. A policy should move across sim, m
 Adapters for specific robots exist to help integration when users already have hardware, but `rfx` is not defined by any one robot family.
 
 Experimental workflow/runtime surfaces may exist in the repository, but the supported public path is the SDK plus the primary CLI above.
+
+## Contributing
+
+Prerequisites: Python 3.13+, Rust/cargo, uv.
+
+```bash
+bash scripts/setup-from-source.sh
+```
+
+This installs dependencies, builds the Rust extension, and sets up git hooks. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [docs/workflow.md](docs/workflow.md) for the development workflow.
 
 ## Community
 

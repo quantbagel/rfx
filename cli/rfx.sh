@@ -61,7 +61,7 @@ so101_demo() {
 }
 
 so101_bimanual() {
-  uv run --python 3.13 python examples/teleop_record.py --config configs/so101_bimanual.yaml "$@"
+  uv run --python 3.13 python rfx/examples/teleop_record.py --config rfx/configs/so101_bimanual.yaml "$@"
 }
 
 so101_setup() {

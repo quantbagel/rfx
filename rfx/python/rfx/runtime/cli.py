@@ -88,6 +88,7 @@ def _print_inference_profile(profile: dict[str, float]) -> None:
     print(f"[rfx]   action:      {profile['action_latency_ms']:.1f} ms")
     print(f"[rfx]   e2e total:   {profile['end_to_end_latency_ms']:.1f} ms")
 
+
 # ---------------------------------------------------------------------------
 # deploy
 # ---------------------------------------------------------------------------
@@ -458,7 +459,9 @@ def _local_region_candidates(regions: list[str]) -> list[dict[str, Any]]:
     ]
 
 
-def _register_robot_from_args(args: argparse.Namespace) -> tuple[str, dict[str, str], dict[str, Any]]:
+def _register_robot_from_args(
+    args: argparse.Namespace,
+) -> tuple[str, dict[str, str], dict[str, Any]]:
     from rfx.platform_client import (
         register_robot,
     )
@@ -491,7 +494,9 @@ def _run_region_probe(args: argparse.Namespace, *, robot_id: str) -> int:
         if not candidates:
             print("[rfx] No probe candidates returned by the platform.")
             return 1
-        print(f"[rfx] Probing {len(candidates)} AWS region candidates directly from this machine...")
+        print(
+            f"[rfx] Probing {len(candidates)} AWS region candidates directly from this machine..."
+        )
         probe_results = _probe_region_candidates(
             candidates,
             samples=args.probe_samples,
@@ -542,13 +547,15 @@ def cmd_probe(args: argparse.Namespace) -> int:
 
     regions = [item.strip() for item in args.regions.split(",") if item.strip()]
     if not regions:
-      regions = list(_DEFAULT_AWS_PROBE_REGIONS)
+        regions = list(_DEFAULT_AWS_PROBE_REGIONS)
 
     try:
         if args.url:
             candidates = fetch_region_candidates(url=args.url, api_key=args.api_key)
             if not candidates:
-                print("[rfx] Platform returned no probe candidates; falling back to built-in AWS regions.")
+                print(
+                    "[rfx] Platform returned no probe candidates; falling back to built-in AWS regions."
+                )
                 candidates = _local_region_candidates(regions)
         else:
             candidates = _local_region_candidates(regions)
@@ -691,7 +698,9 @@ def _probe_region_candidates(
             continue
         avg_ms = statistics.fmean(sample_values)
         best_ms = min(sample_values)
-        print(f"[rfx]   {region:12s} avg={avg_ms:6.1f} ms best={best_ms:6.1f} ms host={host}:{port}")
+        print(
+            f"[rfx]   {region:12s} avg={avg_ms:6.1f} ms best={best_ms:6.1f} ms host={host}:{port}"
+        )
         results.append(
             {
                 "region": region,
@@ -702,7 +711,9 @@ def _probe_region_candidates(
                 "best_latency_ms": best_ms,
             }
         )
-    return sorted(results, key=lambda item: (float(item["avg_latency_ms"]), float(item["best_latency_ms"])))
+    return sorted(
+        results, key=lambda item: (float(item["avg_latency_ms"]), float(item["best_latency_ms"]))
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -831,15 +842,25 @@ examples:
 
     # --- shared robot args ---
     def add_robot_args(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--url", default=None, help="public dashboard URL, e.g. https://dashboard.example.com")
+        parser.add_argument(
+            "--url", default=None, help="public dashboard URL, e.g. https://dashboard.example.com"
+        )
         parser.add_argument("--api-key", default=None, help="platform API key")
-        parser.add_argument("--robot-id", default=None, help="robot identifier (default: local hostname)")
-        parser.add_argument("--robot-kind", default="so101", help="robot type label, e.g. so101 or go2")
+        parser.add_argument(
+            "--robot-id", default=None, help="robot identifier (default: local hostname)"
+        )
+        parser.add_argument(
+            "--robot-kind", default="so101", help="robot type label, e.g. so101 or go2"
+        )
         parser.add_argument("--display-name", default=None, help="human-readable robot name")
-        parser.add_argument("--transport", default="sdk", help="transport label shown in the dashboard")
+        parser.add_argument(
+            "--transport", default="sdk", help="transport label shown in the dashboard"
+        )
         parser.add_argument("--hostname", default=None, help="override reported hostname")
         parser.add_argument("--org-id", default="", help="optional org identifier")
-        parser.add_argument("--metadata", action="append", default=[], help="extra metadata in key=value form")
+        parser.add_argument(
+            "--metadata", action="append", default=[], help="extra metadata in key=value form"
+        )
 
     # --- register ---
     s = sp.add_parser(
@@ -857,12 +878,28 @@ examples:
         description="Measure candidate AWS region latency directly from the current machine. Submission to the platform is optional.",
     )
     add_robot_args(s)
-    s.add_argument("--regions", default=",".join(_DEFAULT_AWS_PROBE_REGIONS), help="comma-separated AWS regions to probe when not fetching candidates from the platform")
-    s.add_argument("--inference", action="store_true", help="print a full latency profile for the best region after probing")
-    s.add_argument("--submit", action="store_true", help="submit probe results back to the platform")
-    s.add_argument("--register-if-missing", action="store_true", help="register the robot before probing")
-    s.add_argument("--probe-samples", type=int, default=3, help="number of TCP latency samples per region")
-    s.add_argument("--probe-timeout", type=float, default=2.5, help="per-sample TCP connect timeout in seconds")
+    s.add_argument(
+        "--regions",
+        default=",".join(_DEFAULT_AWS_PROBE_REGIONS),
+        help="comma-separated AWS regions to probe when not fetching candidates from the platform",
+    )
+    s.add_argument(
+        "--inference",
+        action="store_true",
+        help="print a full latency profile for the best region after probing",
+    )
+    s.add_argument(
+        "--submit", action="store_true", help="submit probe results back to the platform"
+    )
+    s.add_argument(
+        "--register-if-missing", action="store_true", help="register the robot before probing"
+    )
+    s.add_argument(
+        "--probe-samples", type=int, default=3, help="number of TCP latency samples per region"
+    )
+    s.add_argument(
+        "--probe-timeout", type=float, default=2.5, help="per-sample TCP connect timeout in seconds"
+    )
     s.set_defaults(fn=cmd_probe)
 
     # --- connect ---
@@ -872,11 +909,21 @@ examples:
         description="Register a robot, refresh its region probe automatically, and send periodic heartbeats.",
     )
     add_robot_args(s)
-    s.add_argument("--probe", action="store_true", help="deprecated; probing already runs by default")
-    s.add_argument("--skip-probe", action="store_true", help="skip the automatic region probe during connect")
-    s.add_argument("--probe-samples", type=int, default=3, help="number of TCP latency samples per region")
-    s.add_argument("--probe-timeout", type=float, default=2.5, help="per-sample TCP connect timeout in seconds")
-    s.add_argument("--heartbeat-interval", type=float, default=15.0, help="heartbeat interval in seconds")
+    s.add_argument(
+        "--probe", action="store_true", help="deprecated; probing already runs by default"
+    )
+    s.add_argument(
+        "--skip-probe", action="store_true", help="skip the automatic region probe during connect"
+    )
+    s.add_argument(
+        "--probe-samples", type=int, default=3, help="number of TCP latency samples per region"
+    )
+    s.add_argument(
+        "--probe-timeout", type=float, default=2.5, help="per-sample TCP connect timeout in seconds"
+    )
+    s.add_argument(
+        "--heartbeat-interval", type=float, default=15.0, help="heartbeat interval in seconds"
+    )
     s.add_argument("--once", action="store_true", help="register once and exit without heartbeats")
     s.set_defaults(fn=cmd_connect)
 

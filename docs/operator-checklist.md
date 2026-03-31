@@ -1,42 +1,40 @@
 # Operator Checklist
 
-Use this checklist before every production deploy.
+Checklist before deploying a policy to real hardware.
 
 ## Preconditions
 
-- Zenoh control plane reachable for your deployment topology.
-- Robot config selected and safety profile defined.
-- Dataset collected with the same robot contract version.
+- Robot powered on and reachable (serial port or network).
+- Robot config selected and validated (`rfx doctor`).
+- Policy trained and saved as a self-describing directory.
 
-## Required Gates
+## Pre-deploy checks
 
-1. `collect` run exists and dataset inputs are stored.
-2. `validate` report passed (`timestamp`, `alignment`, `schema`, `missing data` checks).
-3. `train` produced a policy artifact manifest with compatibility metadata.
-4. `eval` report passed for the same artifact.
-5. Optional but recommended: `shadow` report passed.
-6. `deploy` preflight allowed the release.
+1. Policy loads without error:
+   ```python
+   loaded = rfx.load_policy("runs/my-policy")
+   print(loaded.policy_type, loaded.robot_config)
+   ```
 
-## Commands
+2. Mock deploy succeeds:
+   ```bash
+   rfx deploy runs/my-policy --robot so101 --mock --duration 10
+   ```
+
+3. Robot config matches the policy's training config (state_dim, action_dim, joint ordering).
+
+4. Control frequency is appropriate for the robot (`rate_hz` in config or `--rate-hz` flag).
+
+## Deploy
 
 ```bash
-rfx runs list
-rfx runs show <run_id>
-rfx lineage <deploy_run_id>
+rfx deploy runs/my-policy --robot so101 --duration 30
 ```
 
-## Blockers
+Monitor jitter stats in the output. High p95/p99 jitter indicates the control loop can't keep up at the requested rate.
 
-Deploy must be blocked when any of the following occurs:
+## Post-deploy
 
-- Artifact manifest missing or schema incompatible.
-- No successful eval report for the artifact.
-- Shadow is required but no passing shadow report exists.
-- Robot config hash mismatch.
-- Safety profile mismatch.
-
-## Incident Readiness
-
-- Keep the `run_id` for rollback and audits.
-- Verify `.rfx/runs/`, `.rfx/reports/`, and `.rfx/artifacts/` are persisted.
-- Use `rfx reproduce <run_id>` to inspect exact replay prerequisites.
+- Review `SessionStats` output (iterations, overruns, jitter percentiles).
+- If overruns > 0, consider lowering `rate_hz` or profiling the policy.
+- Keep the policy directory for reproducibility.
