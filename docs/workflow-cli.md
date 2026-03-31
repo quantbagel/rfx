@@ -39,10 +39,12 @@ rfx record --robot go2 --repo-id demos --duration 20 --push
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--robot` | required | Robot type (`so101`, `go2`, `g1`, `innate`) |
+| `--robot` | required | Robot type (`so101`, `go2`, `g1`) |
 | `--repo-id` | required | Dataset name or HuggingFace repo ID |
+| `--output` / `-o` | `datasets` | Output root directory |
 | `--episodes` | `1` | Number of episodes to record |
 | `--duration` | interactive | Episode duration in seconds. Omit to stop with Ctrl+C. |
+| `--task` | `default` | Task label for episodes |
 | `--fps` | `30` | Recording frame rate |
 | `--rate-hz` | `fps` | Sampling rate override for `robot.observe()` |
 | `--config` | none | Robot YAML config override |
@@ -83,7 +85,6 @@ rfx deploy runs/my-policy --robot so101 --duration 60 --rate-hz 50 --port /dev/t
 | `--rate-hz` | auto | Control loop frequency (defaults to robot config) |
 | `--duration` | infinite | Run time in seconds. Ctrl+C to stop if not set. |
 | `--mock` | `false` | Use MockRobot instead of real hardware |
-| `--device` | `cpu` | Torch device for inference |
 | `--warmup` | `0.5` | Seconds to sleep after reset before starting |
 
 Deploy handles: load weights, resolve robot config, connect hardware, run control loop with rate control and jitter tracking, clean shutdown on Ctrl+C.

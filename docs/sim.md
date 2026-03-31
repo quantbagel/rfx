@@ -68,7 +68,7 @@ uv run --python 3.13 rfx/examples/genesis_viewer.py \
 
 If Genesis is not installed, rfx tries `uv pip install genesis-world`, falling back to `pip install genesis-world`.
 
-Genesis requires CPython 3.13 (no 3.14 wheels yet).
+Genesis requires CPython <= 3.13 (no 3.14 wheels yet).
 
 Opt in globally:
 

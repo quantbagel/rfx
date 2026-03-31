@@ -143,5 +143,5 @@ robot = RealRobot(my_config, robot_type="innate")
 
 - **`ImportError: zenoh`**: Install with `pip install eclipse-zenoh`.
 - **No state received**: Verify the bot is publishing to the expected topic. Check with `zenoh` CLI tools or set `logging.basicConfig(level=logging.DEBUG)`.
-- **CDR parse errors**: Ensure the bot sends standard ROS 2 CDR-encoded `sensor_msgs/JointState`. The deserializer expects little-endian encoding with a 4-byte RTPS header.
+- **CDR parse errors**: Ensure the bot sends standard ROS 2 CDR-encoded `sensor_msgs/JointState`. The deserializer expects little-endian encoding with a 4-byte CDR encapsulation header.
 - **Multi-machine**: Pass `zenoh_endpoint="tcp/<router_ip>:7447"` to connect through a Zenoh router.

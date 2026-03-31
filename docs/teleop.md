@@ -197,5 +197,8 @@ run(
     format="native",              # export format: native, lerobot, mcap
     metadata=None,                # extra metadata dict
     otel=False,                   # enable OpenTelemetry
+    otel_exporter="console",      # OTEL exporter: console or otlp
+    otel_sample_every=100,        # trace every N iterations
+    otlp_endpoint=None,           # OTLP collector endpoint
 )
 ```

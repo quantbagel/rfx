@@ -214,6 +214,16 @@ Adapters for specific robots exist to help integration when users already have h
 
 Experimental workflow/runtime surfaces may exist in the repository, but the supported public path is the SDK plus the primary CLI above.
 
+## Contributing
+
+Prerequisites: Python 3.13+, Rust/cargo, uv.
+
+```bash
+bash scripts/setup-from-source.sh
+```
+
+This installs dependencies, builds the Rust extension, and sets up git hooks. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [docs/workflow.md](docs/workflow.md) for the development workflow.
+
 ## Community
 
 - [Issues](https://github.com/quantbagel/rfx/issues)

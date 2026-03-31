@@ -4,12 +4,14 @@ Canonical scripts demonstrating the core rfx user workflows.
 
 ## Scripts
 
-- **`so101_quickstart.py`** -- Connect to a real SO-101 and run a gentle movement smoke test
 - **`deploy_real.py`** -- Deploy a policy to real SO-101 hardware (or mock mode)
 - **`universal_go2.py`** -- Command-level Go2 control across `mock`/`genesis`/`mjx`/`real`
 - **`genesis_viewer.py`** -- Visual inspection and debugging in Genesis with a live viewer
 - **`train_vla.py`** -- End-to-end training loop in simulation with parallel environments
 - **`teleop_record.py`** -- Teleoperation data collection with optional LeRobot/MCAP export
+- **`g1_teleop.py`** -- G1 humanoid VR teleoperation (or mock/no-VR mode)
+
+Hardware quickstarts live in the top-level `examples/` directory (e.g. `examples/so101_quickstart.py`).
 
 ## Running
 

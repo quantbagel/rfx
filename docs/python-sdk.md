@@ -38,7 +38,7 @@ rfx.deploy("runs/my-policy", robot="so101")
 You can explore the entire rfx workflow on your laptop — no robot required.
 
 ```python
-# Mock robot: zero deps, spring-damper physics
+# Mock robot: no sim engine deps, spring-damper physics
 robot = rfx.MockRobot(state_dim=12, action_dim=6)
 obs = robot.observe()
 robot.act(torch.zeros(1, 64))
@@ -72,7 +72,7 @@ Built-in robots:
 
 ```python
 robot = rfx.SimRobot.from_config("so101.yaml", backend="genesis", viewer=True)
-robot = rfx.MockRobot(state_dim=12, action_dim=6)   # zero deps, for testing
+robot = rfx.MockRobot(state_dim=12, action_dim=6)   # no sim engine deps, for testing
 robot = rfx.RealRobot(rfx.SO101_CONFIG)              # real hardware (SO-101)
 robot = rfx.RealRobot(rfx.GO2_CONFIG)                # real hardware (Go2)
 robot = rfx.RealRobot(rfx.INNATE_CONFIG)             # real hardware (Innate, Zenoh-native)
@@ -182,11 +182,14 @@ rfx.push_policy("runs/go2-walk-v1", "rfx-community/go2-walk-v1")
 stats = rfx.deploy(
     "runs/my-policy",      # path, hf:// URL, or .py file
     robot="so101",          # robot type or YAML path
+    config=None,            # YAML config path (overrides robot)
     port="/dev/ttyACM0",    # optional hardware override
     rate_hz=50,             # control frequency
     duration=30,            # seconds (None = infinite)
     mock=False,             # use MockRobot instead
     device="cpu",           # torch device
+    warmup_s=0.5,           # seconds to sleep after reset
+    verbose=True,           # print status during deployment
 )
 
 # stats contains timing info
@@ -239,6 +242,9 @@ rfx/python/rfx/
 ├── sim/            # Simulation backends (MuJoCo, Genesis, mock)
 ├── teleop/         # Teleoperation sessions, transport, recording
 ├── runtime/        # Lifecycle, CLI, health, runtime helpers
+├── workflow/       # Quality gates, stage registry
+├── utils/          # Padding, transforms, normalizers
+├── nn.py           # Policy definitions (MLP, ActorCritic, save/load)
 ├── hub.py          # Model save/load/push (HuggingFace Hub)
 ├── session.py      # Rate-controlled control loop
 ├── deploy.py       # rfx.deploy() implementation

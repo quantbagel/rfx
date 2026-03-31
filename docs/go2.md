@@ -14,7 +14,7 @@ If you have a Unitree Go2 quadruped, this is the fastest path.
 rfx doctor
 ```
 
-Verify that the Rust extension (`rfx._rfx`) loads and your network can reach the Go2.
+Verify that the Rust extension (`rfx._rfx`) loads and core dependencies are available.
 
 ## 2) Connect and observe
 
@@ -83,6 +83,7 @@ Default config (`rfx/configs/go2.yaml`):
 
 ```yaml
 name: Unitree Go2
+urdf_path: rfx/assets/robots/go2/urdf/go2.urdf
 state_dim: 34      # 12 pos + 12 vel + 4 quat + 3 gyro + 3 acc
 action_dim: 12     # 12 joint position commands
 control_freq_hz: 200
@@ -131,6 +132,8 @@ Place URDF assets under `rfx/assets/robots/go2/urdf/` first. See [Simulation Gui
 | 24-27 | Body quaternion (w, x, y, z) |
 | 28-30 | Gyroscope (rad/s) |
 | 31-33 | Accelerometer |
+
+Note: `GO2_CONFIG` in Python uses `state_dim=36` while the YAML and observe code produce 34 elements. The state is zero-padded to `max_state_dim=64` for the observation tensor regardless.
 
 ## Troubleshooting
 

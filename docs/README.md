@@ -1,5 +1,7 @@
 # Docs
 
+New here? Start with the [Python SDK](python-sdk.md) to install and try a mock robot, then pick a robot quickstart below. When you're ready to collect data and deploy, see the [CLI reference](workflow-cli.md).
+
 ## Getting started
 
 - Python SDK: `docs/python-sdk.md`
